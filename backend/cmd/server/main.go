@@ -15,6 +15,7 @@ import (
 	"github.com/joshuaferrara/godseye/backend/internal/broadcast"
 	"github.com/joshuaferrara/godseye/backend/internal/config"
 	"github.com/joshuaferrara/godseye/backend/internal/db"
+	"github.com/joshuaferrara/godseye/backend/internal/ingestion"
 	"github.com/joshuaferrara/godseye/backend/internal/ws"
 )
 
@@ -38,6 +39,13 @@ func main() {
 	defer pool.Close()
 	slog.Info("connected to database")
 
+	// Run database migrations.
+	if err := db.Migrate(ctx, pool); err != nil {
+		slog.Error("failed to run migrations", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("migrations complete")
+
 	// Connect to Redis.
 	opts, err := redis.ParseURL(cfg.RedisURL)
 	if err != nil {
@@ -60,6 +68,12 @@ func main() {
 			slog.Error("broadcaster error", "error", err)
 		}
 	}()
+
+	// Set up ingestion workers.
+	flightWorker := ingestion.NewFlightWorker(pool, rdb, cfg.OpenSkyUsername, cfg.OpenSkyPassword)
+	satelliteWorker := ingestion.NewSatelliteWorker(pool, rdb)
+	mgr := ingestion.NewManager(flightWorker, satelliteWorker)
+	go mgr.StartAll(ctx)
 
 	// Set up HTTP routes.
 	mux := http.NewServeMux()

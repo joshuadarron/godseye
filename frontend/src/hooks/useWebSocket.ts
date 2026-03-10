@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import type { DeltaMessage } from '../types/common'
 import type { Flight } from '../types/flight'
+import type { Satellite } from '../types/satellite'
 import { useFlightStore } from '../stores/flightStore'
+import { useSatelliteStore } from '../stores/satelliteStore'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 
@@ -14,20 +16,23 @@ export function useWebSocket() {
   const retriesRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const processDeltas = useFlightStore((s) => s.processDeltas)
+  const processFlightDeltas = useFlightStore((s) => s.processDeltas)
+  const processSatelliteDeltas = useSatelliteStore((s) => s.processDeltas)
 
   const dispatch = useCallback(
     (msg: DeltaMessage) => {
       switch (msg.layer) {
         case 'flights':
-          processDeltas(msg.entities as Flight[], msg.action)
+          processFlightDeltas(msg.entities as Flight[], msg.action)
           break
-        // Future layers will be dispatched here
+        case 'satellites':
+          processSatelliteDeltas(msg.entities as Satellite[], msg.action)
+          break
         default:
           break
       }
     },
-    [processDeltas],
+    [processFlightDeltas, processSatelliteDeltas],
   )
 
   const connect = useCallback(() => {

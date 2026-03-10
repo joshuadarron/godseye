@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS satellite_tles;
+DROP TABLE IF EXISTS flights;
