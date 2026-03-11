@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+/* Prevent Tailwind's preflight from interfering with CesiumJS rendering */
+.cesium-widget,
+.cesium-widget canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
