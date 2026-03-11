@@ -1,9 +1,25 @@
 @import "tailwindcss";
 
+/* Ensure full-height layout chain for CesiumJS */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 /* Prevent Tailwind's preflight from interfering with CesiumJS rendering */
 .cesium-widget,
 .cesium-widget canvas {
   width: 100%;
   height: 100%;
   touch-action: none;
+}
+
+.cesium-viewer {
+  width: 100%;
+  height: 100%;
 }

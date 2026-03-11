@@ -1,4 +1,4 @@
-import { Ion, Color, ImageryLayer, IonImageryProvider } from 'cesium'
+import { Ion, Color } from 'cesium'
 import { Viewer, Globe as CesiumGlobe, Scene, SkyAtmosphere } from 'resium'
 import FlightLayer from './FlightLayer'
 import SatelliteLayer from './SatelliteLayer'
@@ -11,10 +11,6 @@ if (token) {
   Ion.defaultAccessToken = token
 }
 
-const defaultBaseLayer = ImageryLayer.fromProviderAsync(
-  IonImageryProvider.fromAssetId(2) // Cesium World Imagery
-)
-
 export default function Globe() {
   const { status } = useWebSocket()
 
@@ -22,11 +18,9 @@ export default function Globe() {
     <>
       <Viewer
         full
-        baseLayer={defaultBaseLayer}
         timeline={false}
         animation={false}
         fullscreenButton={false}
-        baseLayerPicker={false}
         navigationHelpButton={false}
         homeButton={false}
         geocoder={false}
@@ -36,10 +30,7 @@ export default function Globe() {
       >
         <Scene backgroundColor={Color.BLACK} />
         <SkyAtmosphere />
-        <CesiumGlobe
-          enableLighting
-          showGroundAtmosphere
-        />
+        <CesiumGlobe showGroundAtmosphere />
         <FlightLayer />
         <SatelliteLayer />
       </Viewer>
