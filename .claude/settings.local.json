@@ -23,7 +23,15 @@
       "WebFetch(domain:github.com)",
       "Bash(git mv:*)",
       "Bash(go work sync:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(go list:*)",
+      "WebFetch(domain:quaternius.com)",
+      "WebFetch(domain:poly.pizza)",
+      "WebFetch(domain:kenney.nl)",
+      "WebFetch(domain:www.n2yo.com)",
+      "WebFetch(domain:celestrak.org)",
+      "WebFetch(domain:spacetrack.readthedocs.io)",
+      "WebFetch(domain:s3.amazonaws.com)"
     ]
   }
 }

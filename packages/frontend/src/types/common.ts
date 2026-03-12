@@ -8,5 +8,8 @@ export interface Entity {
   id: string
   lat: number
   lng: number
+  heading?: number
+  pitch?: number
+  roll?: number
   [key: string]: unknown
 }
