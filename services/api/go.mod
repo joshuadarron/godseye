@@ -1,4 +1,4 @@
-module github.com/joshuaferrara/godseye/backend
+module github.com/joshuaferrara/godseye/services/api
 
 go 1.22
 

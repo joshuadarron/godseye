@@ -12,11 +12,11 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/joshuaferrara/godseye/backend/internal/broadcast"
-	"github.com/joshuaferrara/godseye/backend/internal/config"
-	"github.com/joshuaferrara/godseye/backend/internal/db"
-	"github.com/joshuaferrara/godseye/backend/internal/ingestion"
-	"github.com/joshuaferrara/godseye/backend/internal/ws"
+	"github.com/joshuaferrara/godseye/services/api/internal/broadcast"
+	"github.com/joshuaferrara/godseye/services/api/internal/config"
+	"github.com/joshuaferrara/godseye/services/api/internal/db"
+	"github.com/joshuaferrara/godseye/services/api/internal/ingestion"
+	"github.com/joshuaferrara/godseye/services/api/internal/ws"
 )
 
 func main() {

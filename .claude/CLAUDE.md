@@ -8,26 +8,37 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 
 ```
 /
-├── backend/                    # Go
-│   ├── cmd/server/main.go
-│   ├── internal/
-│   │   ├── ingestion/          # One worker per data source (flights, vessels, trains, events)
-│   │   ├── broadcast/          # Redis pub/sub → WebSocket fanout
-│   │   └── db/                 # TimescaleDB queries (PostGIS enabled)
-│   ├── docker-compose.yml
-│   └── go.mod
+├── pnpm-workspace.yaml          # JS/TS workspace packages
+├── go.work                      # Go workspace linking all Go services
+├── docker-compose.yml           # TimescaleDB + Redis for local dev
 │
-└── frontend/                   # React + Vite + pnpm
-    ├── src/
-    │   ├── components/
-    │   │   ├── Globe/          # CesiumJS JS API wrapper
-    │   │   ├── HUD/            # Overlay panels, legends, counters
-    │   │   └── Filters/        # Layer toggles per data type
-    │   ├── stores/             # Zustand state (one store per data layer)
-    │   ├── hooks/              # useWebSocket, useGlobeEntities
-    │   └── types/              # Shared TypeScript interfaces
-    ├── vite.config.ts
-    └── package.json
+├── packages/
+│   ├── frontend/                # React + Vite + pnpm
+│   │   ├── src/
+│   │   │   ├── components/
+│   │   │   │   ├── Globe/       # CesiumJS JS API wrapper
+│   │   │   │   ├── HUD/         # Overlay panels, legends, counters
+│   │   │   │   └── Filters/     # Layer toggles per data type
+│   │   │   ├── stores/          # Zustand state (one store per data layer)
+│   │   │   ├── hooks/           # useWebSocket, useGlobeEntities
+│   │   │   └── types/           # Shared TypeScript interfaces
+│   │   ├── vite.config.ts
+│   │   └── package.json
+│   └── shared/                  # Shared TS types (@godseye/shared)
+│       └── src/
+│
+├── services/
+│   ├── api/                     # Go — main API + WebSocket server
+│   │   ├── cmd/server/main.go
+│   │   ├── internal/
+│   │   │   ├── ingestion/       # One worker per data source
+│   │   │   ├── broadcast/       # Redis pub/sub → WebSocket fanout
+│   │   │   └── db/              # TimescaleDB queries (PostGIS enabled)
+│   │   └── go.mod
+│   ├── auth/                    # Go — auth service (placeholder)
+│   └── collector/               # Go — historical data collector (placeholder)
+│
+└── infra/                       # Future k8s/terraform configs
 ```
 
 ---
@@ -51,7 +62,7 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 - **Transport**: Native WebSocket client with delta reconciliation
 
 ### Infrastructure
-- Docker Compose for local dev (Go server + TimescaleDB + Redis)
+- Docker Compose at project root for local dev (TimescaleDB + Redis)
 
 ---
 

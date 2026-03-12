@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/joshuaferrara/godseye/backend/internal/broadcast"
+	"github.com/joshuaferrara/godseye/services/api/internal/broadcast"
 	"nhooyr.io/websocket"
 )
 

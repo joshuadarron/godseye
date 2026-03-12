@@ -15,7 +15,15 @@
       "WebSearch",
       "Bash(go get:*)",
       "Bash(node -e:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(npm run build:*)",
+      "Bash(ls -la \"C:\\\\Users\\\\Joshua\\\\Repositories\\\\Personal\\\\godseye\\\\frontend\\\\src\\\\hooks\"\" 2>/dev/null || echo \"Path check failed \")",
+      "Bash(npm view:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(git mv:*)",
+      "Bash(go work sync:*)",
+      "Bash(git rm:*)"
     ]
   }
 }

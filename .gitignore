@@ -2,8 +2,9 @@
 .env
 
 # Go
-backend/server.exe
-backend/server
+services/*/server
+services/*/server.exe
+go.work.sum
 *.exe
 *.dll
 *.so
