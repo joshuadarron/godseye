@@ -43,9 +43,16 @@ export const useLayerVisibilityStore = create<LayerVisibilityState>((set, get) =
   sublayers: defaultSublayers,
 
   toggle: (layer) =>
-    set((state) => ({
-      layers: { ...state.layers, [layer]: !state.layers[layer] },
-    })),
+    set((state) => {
+      const nowOn = !state.layers[layer]
+      const sublayers = { ...state.sublayers }
+      if (nowOn && sublayers[layer]) {
+        sublayers[layer] = Object.fromEntries(
+          Object.keys(sublayers[layer]).map((k) => [k, true]),
+        )
+      }
+      return { layers: { ...state.layers, [layer]: nowOn }, sublayers }
+    }),
 
   toggleSublayer: (layer, sublayer) =>
     set((state) => {

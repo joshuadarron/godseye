@@ -90,7 +90,7 @@ function LayerRow({ layer }: { layer: LayerConfig }) {
     return (
       <button
         onClick={() => toggle(layer.key)}
-        className={`flex items-center gap-2.5 w-full text-left py-2 px-3 text-[15px] cursor-pointer select-none transition-colors rounded-md ${
+        className={`flex items-center gap-3 w-full text-left py-2.5 px-4 text-base cursor-pointer select-none transition-colors ${
           active
             ? 'text-white font-medium bg-white/10'
             : 'text-white/40 hover:text-white/60 hover:bg-white/5'
@@ -108,23 +108,23 @@ function LayerRow({ layer }: { layer: LayerConfig }) {
         <>
           {/* Top-level row — same style as other layers, full width */}
           <DisclosureButton
-            className={`flex items-center w-full text-left py-2 px-3 text-[15px] cursor-pointer select-none transition-colors rounded-md ${
+            className={`flex items-center gap-3 w-full text-left py-2.5 px-4 text-base cursor-pointer select-none transition-colors ${
               active
                 ? 'text-white font-medium bg-white/10'
                 : 'text-white/40 hover:text-white/60 hover:bg-white/5'
             }`}
           >
+            {layer.icon}
+            <span>{layer.label}</span>
             <svg
-              className={`w-3 h-3 mr-2 text-white/40 transition-transform duration-200 shrink-0 ${
+              className={`w-4 h-4 shrink-0 fill-current transition-transform duration-200 ${
                 open ? 'rotate-90' : ''
               }`}
-              viewBox="0 0 16 16"
-              fill="currentColor"
+              viewBox="0 0 24 24"
             >
-              <path d="M6 3l5 5-5 5V3z" />
+              <path d="M9 6l6 6-6 6V6z" />
             </svg>
-            <span className="mr-1">{layer.icon}</span>
-            <span className="flex-1">{layer.label}</span>
+            <span className="flex-1" />
             <span
               onClick={(e) => {
                 e.stopPropagation()
@@ -142,12 +142,12 @@ function LayerRow({ layer }: { layer: LayerConfig }) {
 
           <DisclosurePanel
             transition
-            className="pl-5 pb-1 flex flex-col gap-0.5 origin-top transition duration-200 ease-out data-[closed]:-translate-y-1 data-[closed]:opacity-0"
+            className="pb-1 flex flex-col gap-0.5 origin-top transition duration-200 ease-out data-[closed]:-translate-y-1 data-[closed]:opacity-0"
           >
             {/* All toggle */}
             <button
               onClick={() => setAllSublayers(layer.key, !allSubsOn)}
-              className={`block w-full text-left py-1.5 px-3 text-sm cursor-pointer select-none transition-colors rounded-md ${
+              className={`block w-full text-left py-2 pl-12 pr-4 text-[15px] cursor-pointer select-none transition-colors ${
                 allSubsOn
                   ? 'text-white bg-white/10'
                   : 'text-white/35 hover:text-white/60 hover:bg-white/5'
@@ -163,7 +163,7 @@ function LayerRow({ layer }: { layer: LayerConfig }) {
                 <button
                   key={subKey}
                   onClick={() => toggleSublayer(layer.key, subKey)}
-                  className={`block w-full text-left py-1.5 px-3 text-sm cursor-pointer select-none transition-colors rounded-md ${
+                  className={`block w-full text-left py-2 pl-12 pr-4 text-[15px] cursor-pointer select-none transition-colors ${
                     subActive
                       ? 'text-white bg-white/10'
                       : 'text-white/35 hover:text-white/60 hover:bg-white/5'
@@ -194,24 +194,24 @@ export default function Sidebar() {
         show={!collapsed}
         enter="transition-all duration-300 ease-out"
         enterFrom="w-0 opacity-0"
-        enterTo="w-56 opacity-100"
+        enterTo="w-72 opacity-100"
         leave="transition-all duration-200 ease-in"
-        leaveFrom="w-56 opacity-100"
+        leaveFrom="w-72 opacity-100"
         leaveTo="w-0 opacity-0"
       >
         <div className="h-full bg-black/60 backdrop-blur-md text-white flex flex-col overflow-hidden border-r border-white/[0.06]">
-          <div className="px-3 pt-5 pb-3 flex flex-col min-w-56 h-full overflow-y-auto">
-            <Field>
+          <div className="pt-5 pb-3 flex flex-col min-w-72 h-full overflow-y-auto">
+            <Field className="px-4">
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search..."
-                className="w-full px-3 py-1.5 mb-4 rounded-md bg-white/5 border border-white/[0.08] text-sm text-white placeholder-white/30 outline-none focus:border-white/20 transition-colors"
+                className="w-full px-4 py-2 mb-4 rounded-md bg-white/5 border border-white/[0.08] text-base text-white placeholder-white/30 outline-none focus:border-white/20 transition-colors"
               />
             </Field>
 
             <div className="border-t border-white/[0.08] pt-4">
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3 px-3">
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-white/40 mb-3 px-4">
                 Layers
               </h3>
               <nav className="flex flex-col gap-0.5">
