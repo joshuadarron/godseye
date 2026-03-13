@@ -3,6 +3,7 @@ import { Ion, Color, UrlTemplateImageryProvider, IonImageryProvider, ImageryLaye
 import { Viewer, Globe as CesiumGlobe, Scene, SkyAtmosphere, useCesium } from 'resium'
 import FlightLayer from './FlightLayer'
 import SatelliteLayer from './SatelliteLayer'
+import SatelliteOrbitOverlay from './SatelliteOrbitOverlay'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 
@@ -125,6 +126,7 @@ export default function Globe() {
       <PickHandler />
       <FlightLayer />
       <SatelliteLayer />
+      <SatelliteOrbitOverlay />
     </Viewer>
   )
 }

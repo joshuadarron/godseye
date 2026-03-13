@@ -5,4 +5,6 @@ export interface Satellite extends Entity {
   altitude: number
   velocity: number
   noradId: number
+  tle1: string
+  tle2: string
 }

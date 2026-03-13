@@ -9,4 +9,6 @@ type SatelliteEntity struct {
 	Altitude float64 `json:"altitude"`
 	Velocity float64 `json:"velocity"`
 	NoradID  int     `json:"noradId"`
+	TLE1     string  `json:"tle1"`
+	TLE2     string  `json:"tle2"`
 }

@@ -217,6 +217,8 @@ func (w *SatelliteWorker) propagateAndPublish(ctx context.Context) {
 			Altitude: alt,
 			Velocity: vel,
 			NoradID:  rec.noradID,
+			TLE1:     rec.line1,
+			TLE2:     rec.line2,
 		})
 	}
 
