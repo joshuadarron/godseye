@@ -1,5 +1,14 @@
 import { useState } from 'react'
 import {
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+  Input,
+  Field,
+  Button,
+  Transition,
+} from '@headlessui/react'
+import {
   useLayerVisibilityStore,
   SATELLITE_SUBTYPES,
   type SublayerMap,
@@ -8,31 +17,128 @@ import {
 interface LayerConfig {
   key: string
   label: string
-  icon: string
   subtypes?: Record<string, string>
 }
 
 const LAYERS: LayerConfig[] = [
-  { key: 'flights', label: 'Flights', icon: '\u2708' },
-  { key: 'satellites', label: 'Satellites', icon: '\uD83D\uDEF0', subtypes: SATELLITE_SUBTYPES },
-  { key: 'vessels', label: 'Vessels', icon: '\u26F5' },
-  { key: 'trains', label: 'Trains', icon: '\uD83D\uDE82' },
-  { key: 'events', label: 'Events', icon: '\u26A0' },
+  { key: 'flights', label: 'Flights' },
+  { key: 'satellites', label: 'Satellites', subtypes: SATELLITE_SUBTYPES },
+  { key: 'vessels', label: 'Vessels' },
+  { key: 'trains', label: 'Trains' },
+  { key: 'events', label: 'Events' },
 ]
 
-export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false)
-  const [search, setSearch] = useState('')
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+function SubtypeTab({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean
+  onClick: () => void
+  label: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`py-1.5 pl-2 text-sm text-left cursor-pointer select-none transition-colors rounded-md ${
+        active
+          ? 'text-white bg-white/10'
+          : 'text-white/35 hover:text-white/60 hover:bg-white/5'
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
 
-  const layers = useLayerVisibilityStore((s) => s.layers)
-  const sublayers = useLayerVisibilityStore((s) => s.sublayers)
+function LayerRow({ layer }: { layer: LayerConfig }) {
+  const active = useLayerVisibilityStore((s) => s.layers[layer.key] ?? true)
+  const sublayerMap = useLayerVisibilityStore((s) => s.sublayers[layer.key]) as SublayerMap | undefined
   const toggle = useLayerVisibilityStore((s) => s.toggle)
   const toggleSublayer = useLayerVisibilityStore((s) => s.toggleSublayer)
   const setAllSublayers = useLayerVisibilityStore((s) => s.setAllSublayers)
 
-  const toggleExpanded = (key: string) =>
-    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))
+  const hasSubtypes = !!layer.subtypes
+  const allSubsOn = sublayerMap ? Object.values(sublayerMap).every(Boolean) : true
+
+  if (!hasSubtypes || !layer.subtypes) {
+    return (
+      <button
+        onClick={() => toggle(layer.key)}
+        className={`block w-full text-left py-1.5 text-[15px] cursor-pointer select-none transition-colors rounded-md px-2 ${
+          active
+            ? 'text-white font-medium bg-white/10'
+            : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+        }`}
+      >
+        {layer.label}
+      </button>
+    )
+  }
+
+  return (
+    <Disclosure defaultOpen={active}>
+      {({ open }) => (
+        <>
+          <div className="flex items-center">
+            <DisclosureButton
+              className={`flex-1 text-left py-1.5 px-2 text-[15px] cursor-pointer select-none transition-colors rounded-md ${
+                active ? 'text-white font-medium' : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <svg
+                  className={`w-3 h-3 text-white/40 transition-transform duration-200 ${
+                    open ? 'rotate-90' : ''
+                  }`}
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                >
+                  <path d="M6 3l5 5-5 5V3z" />
+                </svg>
+                {layer.label}
+              </span>
+            </DisclosureButton>
+            <button
+              onClick={() => toggle(layer.key)}
+              className={`text-xs px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                active
+                  ? 'text-sky-400 hover:text-sky-300'
+                  : 'text-white/30 hover:text-white/50'
+              }`}
+            >
+              {active ? 'ON' : 'OFF'}
+            </button>
+          </div>
+
+          <DisclosurePanel
+            transition
+            className="pl-5 pb-1 flex flex-col gap-0.5 origin-top transition duration-200 ease-out data-[closed]:-translate-y-1 data-[closed]:opacity-0"
+          >
+            <SubtypeTab
+              active={allSubsOn}
+              onClick={() => setAllSublayers(layer.key, !allSubsOn)}
+              label="All"
+            />
+
+            {Object.entries(layer.subtypes!).map(([subKey, subLabel]) => (
+              <SubtypeTab
+                key={subKey}
+                active={sublayerMap?.[subKey] ?? true}
+                onClick={() => toggleSublayer(layer.key, subKey)}
+                label={subLabel}
+              />
+            ))}
+          </DisclosurePanel>
+        </>
+      )}
+    </Disclosure>
+  )
+}
+
+export default function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false)
+  const [search, setSearch] = useState('')
 
   const filteredLayers = search
     ? LAYERS.filter((l) => l.label.toLowerCase().includes(search.toLowerCase()))
@@ -40,162 +146,47 @@ export default function Sidebar() {
 
   return (
     <div className="fixed left-0 top-0 h-full z-50 flex">
-      <div
-        className={`h-full bg-black/80 backdrop-blur-md text-white flex flex-col transition-all duration-300 overflow-hidden ${
-          collapsed ? 'w-0' : 'w-70'
-        }`}
+      <Transition
+        show={!collapsed}
+        enter="transition-all duration-300 ease-out"
+        enterFrom="w-0 opacity-0"
+        enterTo="w-56 opacity-100"
+        leave="transition-all duration-200 ease-in"
+        leaveFrom="w-56 opacity-100"
+        leaveTo="w-0 opacity-0"
       >
-        <div className="p-4 flex flex-col gap-3 min-w-70 h-full overflow-y-auto">
-          {/* Header */}
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500">
-            Layers
-          </h2>
+        <div className="h-full bg-black/60 backdrop-blur-md text-white flex flex-col overflow-hidden border-r border-white/[0.06]">
+          <div className="px-5 pt-5 pb-3 flex flex-col min-w-56 h-full overflow-y-auto">
+            <Field>
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
+                className="w-full px-3 py-1.5 mb-4 rounded-md bg-white/5 border border-white/[0.08] text-sm text-white placeholder-white/30 outline-none focus:border-white/20 transition-colors"
+              />
+            </Field>
 
-          {/* Search bar */}
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search layers..."
-            className="w-full px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500 transition-colors"
-          />
-
-          {/* Layer list */}
-          <div className="flex flex-col gap-0.5">
-            {filteredLayers.map((layer) => {
-              const active = layers[layer.key] ?? true
-              const hasSubtypes = !!layer.subtypes
-              const isExpanded = expanded[layer.key] ?? false
-              const subs = sublayers[layer.key] as SublayerMap | undefined
-              const allSubsOn = subs
-                ? Object.values(subs).every(Boolean)
-                : true
-              const someSubsOff = subs
-                ? Object.values(subs).some((v) => !v)
-                : false
-
-              return (
-                <div key={layer.key}>
-                  {/* Top-level layer row */}
-                  <div
-                    className={`flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer select-none transition-colors ${
-                      active
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : 'text-gray-400 hover:bg-white/5'
-                    }`}
-                  >
-                    {/* Expand/collapse arrow for layers with subtypes */}
-                    {hasSubtypes ? (
-                      <button
-                        onClick={() => toggleExpanded(layer.key)}
-                        className="w-4 h-4 flex items-center justify-center text-[10px] text-gray-500 hover:text-white transition-transform cursor-pointer"
-                        style={{ transform: isExpanded ? 'rotate(90deg)' : undefined }}
-                      >
-                        &#9654;
-                      </button>
-                    ) : (
-                      <span className="w-4" />
-                    )}
-
-                    {/* Icon */}
-                    <span className="text-base leading-none">{layer.icon}</span>
-
-                    {/* Label — clicking toggles the layer */}
-                    <span
-                      className="flex-1 text-sm font-medium"
-                      onClick={() => {
-                        toggle(layer.key)
-                        if (hasSubtypes) {
-                          // When toggling off, collapse. When toggling on, expand.
-                          if (active) {
-                            setExpanded((p) => ({ ...p, [layer.key]: false }))
-                          } else {
-                            setExpanded((p) => ({ ...p, [layer.key]: true }))
-                          }
-                        }
-                      }}
-                    >
-                      {layer.label}
-                    </span>
-
-                    {/* Toggle indicator */}
-                    <div
-                      onClick={() => {
-                        toggle(layer.key)
-                        if (hasSubtypes) {
-                          if (active) {
-                            setExpanded((p) => ({ ...p, [layer.key]: false }))
-                          } else {
-                            setExpanded((p) => ({ ...p, [layer.key]: true }))
-                          }
-                        }
-                      }}
-                      className={`w-8 h-4 rounded-full flex items-center transition-colors cursor-pointer ${
-                        active ? 'bg-blue-500 justify-end' : 'bg-white/15 justify-start'
-                      }`}
-                    >
-                      <div className="w-3 h-3 rounded-full bg-white mx-0.5 shadow-sm" />
-                    </div>
-                  </div>
-
-                  {/* Sublayer dropdown */}
-                  {hasSubtypes && isExpanded && active && layer.subtypes && (
-                    <div className="ml-6 mt-0.5 mb-1 flex flex-col gap-0.5">
-                      {/* Select All row */}
-                      <label
-                        className="flex items-center gap-2 px-2.5 py-1.5 rounded text-xs cursor-pointer select-none hover:bg-white/5 transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={allSubsOn}
-                          ref={(el) => {
-                            if (el) el.indeterminate = !allSubsOn && someSubsOff
-                          }}
-                          onChange={() => setAllSublayers(layer.key, !allSubsOn)}
-                          className="accent-blue-500 w-3.5 h-3.5 rounded cursor-pointer"
-                        />
-                        <span className="text-gray-300 font-medium">Select All</span>
-                      </label>
-
-                      {/* Individual subtypes */}
-                      {Object.entries(layer.subtypes).map(([subKey, subLabel]) => {
-                        const subActive = subs?.[subKey] ?? true
-                        return (
-                          <label
-                            key={subKey}
-                            className={`flex items-center gap-2 px-2.5 py-1.5 rounded text-xs cursor-pointer select-none transition-colors ${
-                              subActive
-                                ? 'text-white hover:bg-blue-500/10'
-                                : 'text-gray-500 hover:bg-white/5'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={subActive}
-                              onChange={() => toggleSublayer(layer.key, subKey)}
-                              className="accent-blue-500 w-3.5 h-3.5 rounded cursor-pointer"
-                            />
-                            <span>{subLabel}</span>
-                          </label>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+            <div className="border-t border-white/[0.08] pt-4">
+              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">
+                Layers
+              </h3>
+              <nav className="flex flex-col gap-0.5">
+                {filteredLayers.map((layer) => (
+                  <LayerRow key={layer.key} layer={layer} />
+                ))}
+              </nav>
+            </div>
           </div>
         </div>
-      </div>
+      </Transition>
 
-      {/* Collapse/expand toggle */}
-      <button
+      <Button
         onClick={() => setCollapsed((c) => !c)}
-        className="self-center -ml-px h-10 w-6 flex items-center justify-center bg-black/80 backdrop-blur-md text-gray-400 hover:text-white rounded-r cursor-pointer"
+        className="self-center -ml-px h-10 w-6 flex items-center justify-center bg-black/60 backdrop-blur-md border border-white/[0.06] border-l-0 text-white/40 hover:text-white rounded-r cursor-pointer"
         title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {collapsed ? '\u203A' : '\u2039'}
-      </button>
+      </Button>
     </div>
   )
 }

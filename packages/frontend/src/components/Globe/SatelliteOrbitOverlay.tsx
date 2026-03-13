@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import {
+  Cartesian2,
   Cartesian3,
   Color,
   PolylineCollection,
   Material,
+  SceneTransforms,
   Viewer as CesiumViewer,
 } from 'cesium'
 import { useCesium } from 'resium'
@@ -145,7 +147,26 @@ export default function SatelliteOrbitOverlay() {
     viewer.scene.primitives.add(nadirCollection)
     nadirCollectionRef.current = nadirCollection
 
-    // No cleanup return needed — next effect run handles removal.
+    // Compute screen-space bounding box of the orbit for modal placement.
+    const setOrbitScreenBounds = useSelectedEntityStore.getState().setOrbitScreenBounds
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    const scratchScreen = new Cartesian2()
+
+    for (let i = 0; i < orbitPositions.length; i += 4) {
+      const screenPos = SceneTransforms.worldToWindowCoordinates(
+        viewer.scene, orbitPositions[i], scratchScreen,
+      )
+      if (!screenPos) continue
+      if (screenPos.x < minX) minX = screenPos.x
+      if (screenPos.x > maxX) maxX = screenPos.x
+      if (screenPos.y < minY) minY = screenPos.y
+      if (screenPos.y > maxY) maxY = screenPos.y
+    }
+
+    if (isFinite(minX)) {
+      setOrbitScreenBounds({ minX, maxX, minY, maxY })
+    }
+
   }, [rawViewer, selected, satellites])
 
   // Cleanup on unmount.
