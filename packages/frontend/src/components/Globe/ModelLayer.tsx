@@ -30,6 +30,9 @@ interface ModelLayerProps {
   headingOffset?: number
   /** Identifier for this layer, used by pick handlers to trace billboards back to data. */
   layerName?: string
+  /** When true, billboards always face the camera instead of rotating around the Z-axis.
+   *  Use for entities at high latitudes (e.g. polar-orbit satellites) to avoid visual artifacts. */
+  disableRotation?: boolean
 }
 
 /**
@@ -45,6 +48,7 @@ export default function ModelLayer({
   iconScale = 1,
   headingOffset = 0,
   layerName,
+  disableRotation = false,
 }: ModelLayerProps) {
   const { scene } = useCesium()
   const selected = useSelectedEntityStore((s) => s.selected)
@@ -106,9 +110,9 @@ export default function ModelLayer({
           scale: isSelected ? iconScale * 2 : iconScale,
           scaleByDistance: new NearFarScalar(1_000, 2.0, 10_000_000, 0.2),
           color: isSelected ? Color.CYAN : Color.WHITE,
-          rotation: -CesiumMath.toRadians((entity.heading || 0) + headingOffset),
+          rotation: disableRotation ? 0 : -CesiumMath.toRadians((entity.heading || 0) + headingOffset),
           verticalOrigin: VerticalOrigin.CENTER,
-          alignedAxis: Cartesian3.UNIT_Z,
+          alignedAxis: disableRotation ? Cartesian3.ZERO : Cartesian3.UNIT_Z,
           id: layerName ? { layer: layerName, entityId: entity.id } : undefined,
         })
       })
@@ -126,7 +130,7 @@ export default function ModelLayer({
         })
       })
     }
-  }, [entities, scene, iconUrl, iconScale, headingOffset, fallbackColor, fallbackPixelSize, selectedId])
+  }, [entities, scene, iconUrl, iconScale, headingOffset, fallbackColor, fallbackPixelSize, selectedId, disableRotation])
 
   return null
 }

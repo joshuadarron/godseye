@@ -68,6 +68,7 @@ export default function SatelliteLayer() {
           fallbackPixelSize={4}
           iconScale={0.8}
           layerName="satellites"
+          disableRotation
         />
       ))}
     </>
