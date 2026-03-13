@@ -1,12 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  CloseButton,
-  Button,
-  Description,
-} from '@headlessui/react'
+import { Button } from '@headlessui/react'
 import { useSelectedEntityStore, type ScreenRect } from '../../stores/selectedEntityStore'
 import { useSatelliteStore } from '../../stores/satelliteStore'
 
@@ -213,63 +206,58 @@ export default function SatelliteDetailPanel() {
   const isOpen = !!(selected && selected.layer === 'satellites' && initialized)
   const sat = isOpen ? satellites.get(selected!.entityId) : null
 
+  if (!isOpen || !sat) return null
+
   return (
-    <Dialog open={isOpen && !!sat} onClose={clearSelected} className="relative z-[100]">
-      <DialogPanel
-        className="fixed flex flex-col rounded-lg overflow-hidden border border-white/[0.06] shadow-2xl"
-        style={{
-          left: pos.x,
-          top: pos.y,
-          width: size.w,
-          height: size.h,
-        }}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
+    <div
+      className="fixed z-[100] flex flex-col rounded-lg overflow-hidden border border-white/[0.06] shadow-2xl"
+      style={{
+        left: pos.x,
+        top: pos.y,
+        width: size.w,
+        height: size.h,
+      }}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+    >
+      <div
+        onPointerDown={onMoveDown}
+        className="flex items-center justify-between px-4 py-2.5 bg-black/60 backdrop-blur-md cursor-grab active:cursor-grabbing select-none border-b border-white/[0.06] shrink-0"
       >
-        <div
-          onPointerDown={onMoveDown}
-          className="flex items-center justify-between px-4 py-2.5 bg-black/60 backdrop-blur-md cursor-grab active:cursor-grabbing select-none border-b border-white/[0.06] shrink-0"
+        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 truncate pr-2">
+          {sat.name}
+        </h2>
+        <Button
+          onClick={clearSelected}
+          className="text-white/30 hover:text-white/60 text-lg leading-none cursor-pointer shrink-0 transition-colors"
         >
-          <DialogTitle className="text-[11px] font-semibold uppercase tracking-widest text-white/40 truncate pr-2">
-            {sat?.name}
-          </DialogTitle>
-          <CloseButton
-            as={Button}
-            className="text-white/30 hover:text-white/60 text-lg leading-none cursor-pointer shrink-0 transition-colors"
-          >
-            &times;
-          </CloseButton>
-        </div>
+          &times;
+        </Button>
+      </div>
 
-        <Description
-          as="div"
-          className="flex-1 bg-black/60 backdrop-blur-md text-white overflow-auto px-4 py-3"
-        >
-          {sat && (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-              <DataField label="NORAD ID" value={String(sat.noradId)} />
-              <DataField label="Latitude" value={`${sat.lat.toFixed(4)}\u00B0`} />
-              <DataField label="Longitude" value={`${sat.lng.toFixed(4)}\u00B0`} />
-              <DataField label="Altitude" value={`${sat.altitude.toFixed(1)} km`} />
-              <DataField label="Velocity" value={`${sat.velocity.toFixed(2)} km/s`} />
-            </div>
-          )}
-        </Description>
-
-        <div
-          onPointerDown={onResizeDown}
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize"
-        >
-          <svg
-            className="w-full h-full text-white/30 hover:text-white/60 transition-colors"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-          >
-            <path d="M14 14H10L14 10V14ZM14 8L8 14H6L14 6V8Z" />
-          </svg>
+      <div className="flex-1 bg-black/60 backdrop-blur-md text-white overflow-auto px-4 py-3">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+          <DataField label="NORAD ID" value={String(sat.noradId)} />
+          <DataField label="Latitude" value={`${sat.lat.toFixed(4)}\u00B0`} />
+          <DataField label="Longitude" value={`${sat.lng.toFixed(4)}\u00B0`} />
+          <DataField label="Altitude" value={`${sat.altitude.toFixed(1)} km`} />
+          <DataField label="Velocity" value={`${sat.velocity.toFixed(2)} km/s`} />
         </div>
-      </DialogPanel>
-    </Dialog>
+      </div>
+
+      <div
+        onPointerDown={onResizeDown}
+        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize"
+      >
+        <svg
+          className="w-full h-full text-white/30 hover:text-white/60 transition-colors"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+        >
+          <path d="M14 14H10L14 10V14ZM14 8L8 14H6L14 6V8Z" />
+        </svg>
+      </div>
+    </div>
   )
 }
 

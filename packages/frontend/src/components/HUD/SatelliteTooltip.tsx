@@ -4,11 +4,8 @@ import { useSatelliteStore } from '../../stores/satelliteStore'
 export default function SatelliteTooltip() {
   const hovered = useSelectedEntityStore((s) => s.hovered)
   const hoverPosition = useSelectedEntityStore((s) => s.hoverPosition)
-  const selected = useSelectedEntityStore((s) => s.selected)
   const satellites = useSatelliteStore((s) => s.satellites)
 
-  // Hide tooltip when an entity is selected (the detail modal is open).
-  if (selected) return null
   if (!hovered || hovered.layer !== 'satellites' || !hoverPosition) return null
 
   const sat = satellites.get(hovered.entityId)
@@ -16,13 +13,24 @@ export default function SatelliteTooltip() {
 
   return (
     <div
-      className="fixed z-[100] pointer-events-none px-3 py-2 rounded bg-black/85 backdrop-blur-sm text-white text-xs shadow-lg border border-white/10"
+      className="fixed z-[100] pointer-events-none px-4 py-3 rounded-lg bg-black/60 backdrop-blur-md text-white shadow-2xl border border-white/[0.06]"
       style={{ left: hoverPosition.x + 14, top: hoverPosition.y - 14 }}
     >
-      <p className="font-semibold text-sm mb-1">{sat.name}</p>
-      <p className="text-gray-300">Altitude: {sat.altitude.toFixed(1)} km</p>
-      <p className="text-gray-300">Velocity: {sat.velocity.toFixed(2)} km/s</p>
-      <p className="text-gray-300">NORAD ID: {sat.noradId}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-2">{sat.name}</p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+        <TooltipField label="Altitude" value={`${sat.altitude.toFixed(1)} km`} />
+        <TooltipField label="Velocity" value={`${sat.velocity.toFixed(2)} km/s`} />
+        <TooltipField label="NORAD ID" value={String(sat.noradId)} />
+      </div>
+    </div>
+  )
+}
+
+function TooltipField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span className="text-white/35 text-[11px] uppercase tracking-wide">{label}</span>
+      <p className="text-white/90 text-sm font-medium">{value}</p>
     </div>
   )
 }
