@@ -8,6 +8,8 @@ const DEFAULT_HEIGHT = 200
 const MIN_WIDTH = 260
 const MIN_HEIGHT = 140
 const GAP = 20
+/** Must match sidebar w-72 (18rem = 288px). */
+const SIDEBAR_WIDTH = 288
 
 type DragMode = 'move' | 'resize' | null
 
@@ -15,9 +17,18 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
+/** Globe-safe viewport bounds (excludes the sidebar). */
+function globeBounds() {
+  const left = SIDEBAR_WIDTH
+  const right = window.innerWidth
+  const top = 0
+  const bottom = window.innerHeight
+  return { left, right, top, bottom }
+}
+
 /**
  * Pick the side (right, left, below, above) of the orbit bounding box
- * that has the most room, then place the modal there.
+ * that has the largest area, then place the modal there.
  */
 function positionAroundOrbit(
   bounds: ScreenRect,
@@ -26,25 +37,26 @@ function positionAroundOrbit(
   w: number,
   h: number,
 ) {
-  const vw = window.innerWidth
-  const vh = window.innerHeight
+  const g = globeBounds()
+  const gw = g.right - g.left
+  const gh = g.bottom - g.top
 
-  // Available space on each side of the orbit bbox.
-  const spaceRight = vw - bounds.maxX - GAP
-  const spaceLeft = bounds.minX - GAP
-  const spaceBelow = vh - bounds.maxY - GAP
-  const spaceAbove = bounds.minY - GAP
+  // Available space on each side of the orbit bbox within the globe viewport.
+  const spaceRight = g.right - bounds.maxX - GAP
+  const spaceLeft = bounds.minX - g.left - GAP
+  const spaceBelow = g.bottom - bounds.maxY - GAP
+  const spaceAbove = bounds.minY - g.top - GAP
 
   type Placement = { x: number; y: number }
-  const candidates: { space: number; pos: Placement }[] = []
+  const candidates: { area: number; pos: Placement }[] = []
 
   // Right of orbit.
   if (spaceRight >= w) {
     candidates.push({
-      space: spaceRight,
+      area: spaceRight * gh,
       pos: {
         x: bounds.maxX + GAP,
-        y: clamp(clickY - h / 2, GAP, vh - h - GAP),
+        y: clamp(clickY - h / 2, g.top + GAP, g.bottom - h - GAP),
       },
     })
   }
@@ -52,10 +64,10 @@ function positionAroundOrbit(
   // Left of orbit.
   if (spaceLeft >= w) {
     candidates.push({
-      space: spaceLeft,
+      area: spaceLeft * gh,
       pos: {
-        x: bounds.minX - GAP - w,
-        y: clamp(clickY - h / 2, GAP, vh - h - GAP),
+        x: Math.max(g.left + GAP, bounds.minX - GAP - w),
+        y: clamp(clickY - h / 2, g.top + GAP, g.bottom - h - GAP),
       },
     })
   }
@@ -63,9 +75,9 @@ function positionAroundOrbit(
   // Below orbit.
   if (spaceBelow >= h) {
     candidates.push({
-      space: spaceBelow,
+      area: gw * spaceBelow,
       pos: {
-        x: clamp(clickX - w / 2, GAP, vw - w - GAP),
+        x: clamp(clickX - w / 2, g.left + GAP, g.right - w - GAP),
         y: bounds.maxY + GAP,
       },
     })
@@ -74,38 +86,36 @@ function positionAroundOrbit(
   // Above orbit.
   if (spaceAbove >= h) {
     candidates.push({
-      space: spaceAbove,
+      area: gw * spaceAbove,
       pos: {
-        x: clamp(clickX - w / 2, GAP, vw - w - GAP),
+        x: clamp(clickX - w / 2, g.left + GAP, g.right - w - GAP),
         y: bounds.minY - GAP - h,
       },
     })
   }
 
   if (candidates.length > 0) {
-    // Pick the side with the most room.
-    candidates.sort((a, b) => b.space - a.space)
+    candidates.sort((a, b) => b.area - a.area)
     const best = candidates[0].pos
     return { x: Math.round(best.x), y: Math.round(best.y) }
   }
 
-  // Fallback: place to the right of the click point.
+  // Fallback: place to the right of the click point within globe area.
   return {
-    x: Math.round(clamp(clickX + GAP, GAP, vw - w - GAP)),
-    y: Math.round(clamp(clickY - h / 2, GAP, vh - h - GAP)),
+    x: Math.round(clamp(clickX + GAP, g.left + GAP, g.right - w - GAP)),
+    y: Math.round(clamp(clickY - h / 2, g.top + GAP, g.bottom - h - GAP)),
   }
 }
 
 /** Simple fallback when no orbit bounds are available. */
 function positionNearClick(clickX: number, clickY: number, w: number, h: number) {
-  const vw = window.innerWidth
-  const vh = window.innerHeight
+  const g = globeBounds()
 
   let x = clickX + GAP
-  if (x + w > vw - GAP) x = clickX - w - GAP
-  x = clamp(x, GAP, vw - w - GAP)
+  if (x + w > g.right - GAP) x = clickX - w - GAP
+  x = clamp(x, g.left + GAP, g.right - w - GAP)
 
-  const y = clamp(clickY - h / 2, GAP, vh - h - GAP)
+  const y = clamp(clickY - h / 2, g.top + GAP, g.bottom - h - GAP)
   return { x: Math.round(x), y: Math.round(y) }
 }
 
