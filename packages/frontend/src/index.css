@@ -27,11 +27,11 @@ body,
 /* Slide-up animation for detail panels */
 @keyframes slide-up {
   from {
-    transform: translateX(-50%) translateY(100%);
+    transform: translateY(100%);
     opacity: 0;
   }
   to {
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
     opacity: 1;
   }
 }
