@@ -10,6 +10,7 @@ import {
 import { useCesium } from 'resium'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useFlightStore } from '../../stores/flightStore'
+import { ensureAnimatedDashMaterial } from '../../utils/animatedDashMaterial'
 import { lookupRoute } from '../../utils/routeLookup'
 import type { FlightRoute } from '../../utils/routeLookup'
 import type { Flight } from '../../types/flight'
@@ -74,6 +75,8 @@ function buildArcPrimitives(
   route: FlightRoute,
   flight: Flight,
 ): PolylineCollection {
+  ensureAnimatedDashMaterial()
+
   const dep = route.departure
   const arr = route.arrival
   const fLat = flight.lat

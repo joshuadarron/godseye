@@ -18,47 +18,12 @@ import {
   degreesLong,
 } from 'satellite.js'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
+import { ANIMATED_DASH_TYPE, ensureAnimatedDashMaterial } from '../../utils/animatedDashMaterial'
 import { useSatelliteStore } from '../../stores/satelliteStore'
 import type { Satellite } from '../../types/satellite'
 
 const ORBIT_SAMPLE_COUNT = 360
 const ORBIT_COLOR = Color.CYAN.withAlpha(0.6)
-
-// Custom animated dash material using czm_frameNumber (auto-incremented by Cesium).
-const ANIMATED_DASH_TYPE = 'AnimatedDash'
-const ANIMATED_DASH_SOURCE = `
-uniform vec4 color;
-uniform float dashLength;
-uniform float speed;
-
-czm_material czm_getMaterial(czm_materialInput materialInput) {
-  czm_material material = czm_getDefaultMaterial(materialInput);
-  float t = float(czm_frameNumber) * speed;
-  float pos = materialInput.st.s / dashLength - t;
-  float pattern = step(0.5, fract(pos));
-  material.diffuse = color.rgb;
-  material.alpha = color.a * pattern;
-  return material;
-}
-`
-
-let materialTypeRegistered = false
-function ensureMaterialType() {
-  if (materialTypeRegistered) return
-  materialTypeRegistered = true
-  ;(Material as any)._materialCache.addMaterial(ANIMATED_DASH_TYPE, {
-    fabric: {
-      type: ANIMATED_DASH_TYPE,
-      uniforms: {
-        color: new Color(0, 1, 1, 0.6),
-        dashLength: 0.006,
-        speed: 0.005,
-      },
-      source: ANIMATED_DASH_SOURCE,
-    },
-    translucent: true,
-  })
-}
 
 export default function SatelliteOrbitOverlay() {
   const { viewer: rawViewer } = useCesium()
@@ -145,7 +110,7 @@ export default function SatelliteOrbitOverlay() {
     if (currentSegment.length >= 2) segments.push(currentSegment)
 
     // Draw orbit path with animated dash material.
-    ensureMaterialType()
+    ensureAnimatedDashMaterial()
     const orbitCollection = new PolylineCollection()
     for (const seg of segments) {
       const mat = Material.fromType(ANIMATED_DASH_TYPE, {
