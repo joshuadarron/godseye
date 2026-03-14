@@ -5,7 +5,7 @@ export default function SatelliteTooltip() {
   const hovered = useSelectedEntityStore((s) => s.hovered)
   const hoverPosition = useSelectedEntityStore((s) => s.hoverPosition)
   const selected = useSelectedEntityStore((s) => s.selected)
-  const satellites = useSatelliteStore((s) => s.satellites)
+  const satellites = useSatelliteStore((s) => s.entities)
 
   if (!hovered || hovered.layer !== 'satellites' || !hoverPosition) return null
 

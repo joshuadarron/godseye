@@ -3,7 +3,6 @@ package ingestion
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -40,27 +39,33 @@ type tleRecord struct {
 
 // SatelliteWorker propagates satellite positions from TLE data using SGP4.
 type SatelliteWorker struct {
-	pool *pgxpool.Pool
-	rdb  *redis.Client
+	pool   *pgxpool.Pool
+	rdb    *redis.Client
+	client *http.Client
 
-	sats []tleRecord
+	sats        []tleRecord
+	tleFailures int
 }
 
 // NewSatelliteWorker creates a new SatelliteWorker.
 func NewSatelliteWorker(pool *pgxpool.Pool, rdb *redis.Client) *SatelliteWorker {
 	return &SatelliteWorker{
-		pool: pool,
-		rdb:  rdb,
+		pool:   pool,
+		rdb:    rdb,
+		client: NewHTTPClient(60 * time.Second),
 	}
 }
 
 func (w *SatelliteWorker) Name() string { return "satellites" }
 
 func (w *SatelliteWorker) Start(ctx context.Context) error {
-	// Initial TLE fetch.
+	// Initial TLE fetch with backoff retry.
 	if err := w.fetchTLEs(ctx); err != nil {
-		slog.Error("initial TLE fetch failed", "error", err)
+		w.tleFailures++
+		slog.Error("initial TLE fetch failed", "error", err, "failures", w.tleFailures)
 		// Continue anyway — will retry on next refresh cycle.
+	} else {
+		w.tleFailures = 0
 	}
 
 	propagateTicker := time.NewTicker(propagateInterval)
@@ -77,7 +82,11 @@ func (w *SatelliteWorker) Start(ctx context.Context) error {
 			w.propagateAndPublish(ctx)
 		case <-refreshTicker.C:
 			if err := w.fetchTLEs(ctx); err != nil {
-				slog.Error("TLE refresh failed", "error", err)
+				w.tleFailures++
+				bo := Backoff(w.tleFailures, time.Second, maxBackoffDuration)
+				slog.Error("TLE refresh failed", "error", err, "failures", w.tleFailures, "backoff", bo)
+			} else {
+				w.tleFailures = 0
 			}
 		}
 	}
@@ -91,7 +100,7 @@ func (w *SatelliteWorker) fetchTLEs(ctx context.Context) error {
 		return fmt.Errorf("create request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := w.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("http get: %w", err)
 	}
@@ -235,20 +244,8 @@ func (w *SatelliteWorker) propagateAndPublish(ctx context.Context) {
 			anyEntities[j] = e
 		}
 
-		msg := models.DeltaMessage{
-			Layer:    "satellites",
-			Action:   "upsert",
-			Entities: anyEntities,
-		}
-
-		data, err := json.Marshal(msg)
-		if err != nil {
-			slog.Error("satellite marshal error", "error", err)
-			continue
-		}
-
-		if err := w.rdb.Publish(ctx, satelliteRedisChannel, data).Err(); err != nil {
-			slog.Error("satellite publish error", "error", err)
+		if err := PublishDelta(ctx, w.rdb, satelliteRedisChannel, "satellites", "upsert", anyEntities); err != nil {
+			LogPublishError("satellites", err)
 		}
 	}
 }

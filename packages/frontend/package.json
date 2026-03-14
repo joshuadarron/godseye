@@ -25,6 +25,7 @@
     "react-dom": "^19.2.4",
     "resium": "^1.19.4",
     "satellite.js": "^6.0.2",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.11",
+    "@godseye/shared": "workspace:*"
   }
 }

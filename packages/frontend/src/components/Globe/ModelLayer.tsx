@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useCesium } from 'resium'
 import {
   BillboardCollection,
@@ -8,6 +8,8 @@ import {
   NearFarScalar,
   PointPrimitiveCollection,
   VerticalOrigin,
+  type Billboard,
+  type PointPrimitive,
 } from 'cesium'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 
@@ -35,10 +37,17 @@ interface ModelLayerProps {
   disableRotation?: boolean
 }
 
+// Shared scratch objects to avoid allocations in the hot loop.
+const scratchPosition = new Cartesian3()
+
 /**
  * Renders entities as rotated billboards from a single BillboardCollection.
  * BillboardCollection is GPU-instanced and scales to 100k+ entities.
  * Falls back to PointPrimitiveCollection if the icon fails to load.
+ *
+ * Uses incremental diffing: instead of removeAll() + re-add every frame,
+ * maintains a Map of entity ID → primitive and only adds/removes/updates
+ * what changed.
  */
 export default function ModelLayer({
   iconUrl,
@@ -55,7 +64,12 @@ export default function ModelLayer({
   const selectedId = selected && selected.layer === layerName ? selected.entityId : null
   const billboardRef = useRef<BillboardCollection | null>(null)
   const fallbackRef = useRef<PointPrimitiveCollection | null>(null)
-  const iconAvailableRef = useRef<boolean | null>(null)
+  const [iconAvailable, setIconAvailable] = useState<boolean | null>(null)
+
+  // Track entity ID → Cesium primitive for incremental updates.
+  const billboardMapRef = useRef<Map<string, Billboard>>(new Map())
+  const pointMapRef = useRef<Map<string, PointPrimitive>>(new Map())
+  const prevSelectedRef = useRef<string | null>(null)
 
   // Set up both collections once
   useEffect(() => {
@@ -68,14 +82,10 @@ export default function ModelLayer({
     billboardRef.current = billboards
     fallbackRef.current = points
 
-    // Test icon availability
+    // Test icon availability — uses state so the diff effect re-runs once resolved.
     const img = new Image()
-    img.onload = () => {
-      iconAvailableRef.current = true
-    }
-    img.onerror = () => {
-      iconAvailableRef.current = false
-    }
+    img.onload = () => setIconAvailable(true)
+    img.onerror = () => setIconAvailable(false)
     img.src = iconUrl
 
     return () => {
@@ -85,52 +95,106 @@ export default function ModelLayer({
       }
       billboardRef.current = null
       fallbackRef.current = null
-      iconAvailableRef.current = null
+      setIconAvailable(null)
+      billboardMapRef.current.clear()
+      pointMapRef.current.clear()
     }
   }, [scene, iconUrl])
 
-  // Render entities
+  // Incremental entity diff
   useEffect(() => {
     const billboards = billboardRef.current
     const points = fallbackRef.current
     if (!billboards || !points || !scene) return
 
-    // If icon hasn't been tested yet, default to fallback
-    const useIcon = iconAvailableRef.current === true
+    // Wait until we know whether the icon loaded or failed.
+    if (iconAvailable === null) return
 
-    billboards.removeAll()
-    points.removeAll()
+    const useIcon = iconAvailable === true
 
     if (useIcon) {
-      entities.forEach((entity) => {
-        const isSelected = entity.id === selectedId
-        billboards.add({
-          position: Cartesian3.fromDegrees(entity.lon, entity.lat, entity.alt),
-          image: iconUrl,
-          scale: isSelected ? iconScale * 2 : iconScale,
-          scaleByDistance: new NearFarScalar(1_000, 2.0, 10_000_000, 0.2),
-          color: isSelected ? Color.CYAN : Color.WHITE,
-          rotation: disableRotation ? 0 : -CesiumMath.toRadians((entity.heading || 0) + headingOffset),
-          verticalOrigin: VerticalOrigin.CENTER,
-          alignedAxis: disableRotation ? Cartesian3.ZERO : Cartesian3.UNIT_Z,
-          id: layerName ? { layer: layerName, entityId: entity.id } : undefined,
-        })
+      const bMap = billboardMapRef.current
+
+      // Remove stale entities.
+      for (const [id, bb] of bMap) {
+        if (!entities.has(id)) {
+          billboards.remove(bb)
+          bMap.delete(id)
+        }
+      }
+
+      // Add new / update existing.
+      entities.forEach((entity, id) => {
+        const isSelected = id === selectedId
+        const existing = bMap.get(id)
+
+        if (existing) {
+          // Update position in-place.
+          Cartesian3.fromDegrees(entity.lon, entity.lat, entity.alt, undefined, scratchPosition)
+          existing.position = scratchPosition
+          existing.rotation = disableRotation ? 0 : -CesiumMath.toRadians((entity.heading || 0) + headingOffset)
+          // Only update selection styling if selection state changed for this entity.
+          if (id === selectedId || id === prevSelectedRef.current) {
+            existing.scale = isSelected ? iconScale * 2 : iconScale
+            existing.color = isSelected ? Color.CYAN : Color.WHITE
+          }
+        } else {
+          const bb = billboards.add({
+            position: Cartesian3.fromDegrees(entity.lon, entity.lat, entity.alt),
+            image: iconUrl,
+            scale: isSelected ? iconScale * 2 : iconScale,
+            scaleByDistance: new NearFarScalar(500_000, 3.0, 20_000_000, 0.3),
+            color: isSelected ? Color.CYAN : Color.WHITE,
+            rotation: disableRotation ? 0 : -CesiumMath.toRadians((entity.heading || 0) + headingOffset),
+            verticalOrigin: VerticalOrigin.CENTER,
+            alignedAxis: disableRotation ? Cartesian3.ZERO : Cartesian3.UNIT_Z,
+            id: layerName ? { layer: layerName, entityId: entity.id } : undefined,
+          })
+          bMap.set(id, bb)
+        }
       })
     } else {
-      entities.forEach((entity) => {
-        const isSelected = entity.id === selectedId
-        points.add({
-          position: Cartesian3.fromDegrees(entity.lon, entity.lat, entity.alt),
-          pixelSize: isSelected ? fallbackPixelSize * 3 : fallbackPixelSize,
-          scaleByDistance: new NearFarScalar(1_000, 2.0, 10_000_000, 0.2),
-          color: isSelected ? Color.CYAN : fallbackColor,
-          outlineColor: isSelected ? Color.WHITE : Color.TRANSPARENT,
-          outlineWidth: isSelected ? 2 : 0,
-          id: layerName ? { layer: layerName, entityId: entity.id } : undefined,
-        })
+      const pMap = pointMapRef.current
+
+      // Remove stale entities.
+      for (const [id, pt] of pMap) {
+        if (!entities.has(id)) {
+          points.remove(pt)
+          pMap.delete(id)
+        }
+      }
+
+      // Add new / update existing.
+      entities.forEach((entity, id) => {
+        const isSelected = id === selectedId
+        const existing = pMap.get(id)
+
+        if (existing) {
+          Cartesian3.fromDegrees(entity.lon, entity.lat, entity.alt, undefined, scratchPosition)
+          existing.position = scratchPosition
+          if (id === selectedId || id === prevSelectedRef.current) {
+            existing.pixelSize = isSelected ? fallbackPixelSize * 3 : fallbackPixelSize
+            existing.color = isSelected ? Color.CYAN : fallbackColor
+            existing.outlineColor = isSelected ? Color.WHITE : Color.TRANSPARENT
+            existing.outlineWidth = isSelected ? 2 : 0
+          }
+        } else {
+          const pt = points.add({
+            position: Cartesian3.fromDegrees(entity.lon, entity.lat, entity.alt),
+            pixelSize: isSelected ? fallbackPixelSize * 3 : fallbackPixelSize,
+            scaleByDistance: new NearFarScalar(500_000, 3.0, 20_000_000, 0.3),
+            color: isSelected ? Color.CYAN : fallbackColor,
+            outlineColor: isSelected ? Color.WHITE : Color.TRANSPARENT,
+            outlineWidth: isSelected ? 2 : 0,
+            id: layerName ? { layer: layerName, entityId: entity.id } : undefined,
+          })
+          pMap.set(id, pt)
+        }
       })
     }
-  }, [entities, scene, iconUrl, iconScale, headingOffset, fallbackColor, fallbackPixelSize, selectedId, disableRotation])
+
+    prevSelectedRef.current = selectedId
+  }, [entities, scene, iconUrl, iconScale, headingOffset, fallbackColor, fallbackPixelSize, selectedId, disableRotation, layerName, iconAvailable])
 
   return null
 }

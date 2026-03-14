@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@headlessui/react'
 import { useSelectedEntityStore, type ScreenRect } from '../../stores/selectedEntityStore'
 import { useSatelliteStore } from '../../stores/satelliteStore'
@@ -124,7 +124,7 @@ export default function SatelliteDetailPanel() {
   const screenPos = useSelectedEntityStore((s) => s.selectedScreenPosition)
   const orbitBounds = useSelectedEntityStore((s) => s.orbitScreenBounds)
   const clearSelected = useSelectedEntityStore((s) => s.clearSelected)
-  const satellites = useSatelliteStore((s) => s.satellites)
+  const satellites = useSatelliteStore((s) => s.entities)
 
   const [pos, setPos] = useState({ x: 0, y: 0 })
   const [size, setSize] = useState({ w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT })
@@ -271,11 +271,11 @@ export default function SatelliteDetailPanel() {
   )
 }
 
-function DataField({ label, value }: { label: string; value: string }) {
+const DataField = memo(function DataField({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <span className="text-white/35 text-[11px] uppercase tracking-wide">{label}</span>
       <p className="text-white/90 text-sm font-medium">{value}</p>
     </div>
   )
-}
+})

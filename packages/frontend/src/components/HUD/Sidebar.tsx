@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import {
   Disclosure,
   DisclosureButton,
@@ -10,40 +10,17 @@ import {
 } from '@headlessui/react'
 import {
   useLayerVisibilityStore,
-  SATELLITE_SUBTYPES,
   type SublayerMap,
 } from '../../stores/layerVisibilityStore'
+import { layerRegistry, type LayerRegistration } from '../../registries/layerRegistry'
 
-interface LayerConfig {
-  key: string
-  label: string
-  icon: React.ReactNode
-  subtypes?: Record<string, string>
-}
+// Import registrations so the registry is populated.
+import '../../registries/flights'
+import '../../registries/satellites'
 
+/** Static layer entries for layers not yet backed by data (vessels, trains, events). */
 const ICON_CLASS = 'w-4 h-4 shrink-0 fill-current'
-
-const LAYERS: LayerConfig[] = [
-  {
-    key: 'flights',
-    label: 'Flights',
-    icon: (
-      <svg className={ICON_CLASS} viewBox="0 0 24 24">
-        <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-      </svg>
-    ),
-  },
-  {
-    key: 'satellites',
-    label: 'Satellites',
-    icon: (
-      <svg className={ICON_CLASS} viewBox="0 0 24 24">
-        <path d="M6.6 11.4 1 16l4-1-1 4 4.6-5.6M2 2l2.5 2.5M7 3l-1 2M3 7l2-1M17.4 12.6 23 8l-4 1 1-4-4.6 5.6M22 22l-2.5-2.5M17 21l1-2M21 17l-2 1" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    ),
-    subtypes: SATELLITE_SUBTYPES,
-  },
+const PLACEHOLDER_LAYERS: LayerRegistration[] = [
   {
     key: 'vessels',
     label: 'Vessels',
@@ -52,7 +29,7 @@ const LAYERS: LayerConfig[] = [
         <path d="M3 17l2 4h14l2-4H3zM12 3v10M8 7h8l2 6H6l2-6z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-  },
+  } as any,
   {
     key: 'trains',
     label: 'Trains',
@@ -64,7 +41,7 @@ const LAYERS: LayerConfig[] = [
         <path d="M9 4h6v4H9z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
       </svg>
     ),
-  },
+  } as any,
   {
     key: 'events',
     label: 'Events',
@@ -73,10 +50,46 @@ const LAYERS: LayerConfig[] = [
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-  },
+  } as any,
 ]
 
-function LayerRow({ layer }: { layer: LayerConfig }) {
+interface LayerConfig {
+  key: string
+  label: string
+  icon: React.ReactNode
+  subtypes?: Record<string, string>
+}
+
+function buildLayerConfigs(): LayerConfig[] {
+  const configs: LayerConfig[] = []
+
+  // Add registered layers first.
+  for (const reg of layerRegistry.values()) {
+    configs.push({
+      key: reg.key,
+      label: reg.label,
+      icon: reg.icon,
+      subtypes: reg.subtypes,
+    })
+  }
+
+  // Add placeholders for unregistered layers.
+  for (const placeholder of PLACEHOLDER_LAYERS) {
+    if (!layerRegistry.has(placeholder.key)) {
+      configs.push({
+        key: placeholder.key,
+        label: placeholder.label,
+        icon: placeholder.icon,
+      })
+    }
+  }
+
+  return configs
+}
+
+const LAYERS = buildLayerConfigs()
+
+const LayerRow = memo(function LayerRow({ layer }: { layer: LayerConfig }) {
   const active = useLayerVisibilityStore((s) => s.layers[layer.key] ?? true)
   const sublayerMap = useLayerVisibilityStore((s) => s.sublayers[layer.key]) as SublayerMap | undefined
   const toggle = useLayerVisibilityStore((s) => s.toggle)
@@ -178,7 +191,7 @@ function LayerRow({ layer }: { layer: LayerConfig }) {
       )}
     </Disclosure>
   )
-}
+})
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)

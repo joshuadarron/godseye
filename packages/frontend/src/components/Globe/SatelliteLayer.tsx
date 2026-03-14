@@ -31,7 +31,7 @@ const SUBTYPE_COLORS: Record<string, Color> = {
 export default function SatelliteLayer() {
   const visible = useLayerVisibilityStore((s) => s.layers.satellites)
   const sublayers = useLayerVisibilityStore((s) => s.sublayers.satellites)
-  const satellites = useSatelliteStore((s) => s.satellites)
+  const satellites = useSatelliteStore((s) => s.entities)
 
   // Group satellites by subtype.
   const grouped = useMemo(() => {

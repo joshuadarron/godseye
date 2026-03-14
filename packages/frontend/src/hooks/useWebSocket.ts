@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import type { DeltaMessage } from '../types/common'
-import type { Flight } from '../types/flight'
-import type { Satellite } from '../types/satellite'
-import { useFlightStore } from '../stores/flightStore'
-import { useSatelliteStore } from '../stores/satelliteStore'
+import { entityRegistry } from '../stores/entityRegistry'
+
+// Ensure stores are registered before the hook runs.
+import '../stores/flightStore'
+import '../stores/satelliteStore'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 
@@ -16,24 +17,40 @@ export function useWebSocket() {
   const retriesRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const processFlightDeltas = useFlightStore((s) => s.processDeltas)
-  const processSatelliteDeltas = useSatelliteStore((s) => s.processDeltas)
+  // rAF batching: buffer incoming messages and flush once per frame.
+  const bufferRef = useRef<DeltaMessage[]>([])
+  const rafRef = useRef(0)
 
-  const dispatch = useCallback(
-    (msg: DeltaMessage) => {
-      switch (msg.layer) {
-        case 'flights':
-          processFlightDeltas(msg.entities as Flight[], msg.action)
-          break
-        case 'satellites':
-          processSatelliteDeltas(msg.entities as Satellite[], msg.action)
-          break
-        default:
-          break
+  const flush = useCallback(() => {
+    rafRef.current = 0
+    const messages = bufferRef.current
+    bufferRef.current = []
+
+    // Group by layer, merging entity arrays.
+    const grouped = new Map<string, { action: 'upsert' | 'remove'; entities: unknown[] }>()
+
+    for (const msg of messages) {
+      const key = `${msg.layer}:${msg.action}`
+      const existing = grouped.get(key)
+      if (existing) {
+        existing.entities.push(...msg.entities)
+      } else {
+        grouped.set(key, { action: msg.action, entities: [...msg.entities] })
       }
-    },
-    [processFlightDeltas, processSatelliteDeltas],
-  )
+    }
+
+    for (const [key, { action, entities }] of grouped) {
+      const layer = key.split(':')[0]
+      const store = entityRegistry.get(layer)
+      if (store) {
+        store.getState().processDeltas(entities as any, action)
+      }
+    }
+
+    if (messages.length > 0) {
+      setLastMessage(messages[messages.length - 1])
+    }
+  }, [])
 
   const connect = useCallback(() => {
     const url = import.meta.env.VITE_WS_URL as string | undefined
@@ -51,8 +68,10 @@ export function useWebSocket() {
     ws.onmessage = (event: MessageEvent) => {
       try {
         const msg = JSON.parse(event.data as string) as DeltaMessage
-        setLastMessage(msg)
-        dispatch(msg)
+        bufferRef.current.push(msg)
+        if (!rafRef.current) {
+          rafRef.current = requestAnimationFrame(flush)
+        }
       } catch {
         // ignore malformed messages
       }
@@ -66,7 +85,7 @@ export function useWebSocket() {
     ws.onerror = () => {
       ws.close()
     }
-  }, [dispatch])
+  }, [flush])
 
   const scheduleReconnect = useCallback(() => {
     const delay = Math.min(1000 * 2 ** retriesRef.current, MAX_BACKOFF_MS)
@@ -80,6 +99,7 @@ export function useWebSocket() {
     connect()
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
       wsRef.current?.close()
     }
   }, [connect])

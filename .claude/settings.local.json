@@ -43,7 +43,10 @@
       "Bash(docker stop:*)",
       "Bash(docker exec:*)",
       "Bash(npx vite build:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(git checkout:*)",
+      "Bash(go vet:*)",
+      "Bash(git status:*)"
     ]
   }
 }

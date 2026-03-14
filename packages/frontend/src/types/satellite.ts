@@ -1,10 +1,1 @@
-import type { Entity } from './common'
-
-export interface Satellite extends Entity {
-  name: string
-  altitude: number
-  velocity: number
-  noradId: number
-  tle1: string
-  tle2: string
-}
+export type { Satellite } from '@godseye/shared'

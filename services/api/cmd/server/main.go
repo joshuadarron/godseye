@@ -12,10 +12,12 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/joshuaferrara/godseye/services/api/internal/api"
 	"github.com/joshuaferrara/godseye/services/api/internal/broadcast"
 	"github.com/joshuaferrara/godseye/services/api/internal/config"
 	"github.com/joshuaferrara/godseye/services/api/internal/db"
 	"github.com/joshuaferrara/godseye/services/api/internal/ingestion"
+	"github.com/joshuaferrara/godseye/services/api/internal/middleware"
 	"github.com/joshuaferrara/godseye/services/api/internal/ws"
 )
 
@@ -82,10 +84,17 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
+	api.RegisterRoutes(mux, pool)
+
+	handler := middleware.Chain(
+		middleware.RequestID,
+		middleware.Logging,
+		middleware.CORS,
+	)(mux)
 
 	srv := &http.Server{
 		Addr:    cfg.ServerAddr,
-		Handler: mux,
+		Handler: handler,
 	}
 
 	// Start HTTP server in a goroutine.
@@ -106,6 +115,14 @@ func main() {
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Error("server shutdown error", "error", err)
+	}
+
+	// Wait for ingestion workers to finish before closing DB/Redis connections.
+	select {
+	case <-mgr.Done():
+		slog.Info("ingestion workers stopped")
+	case <-shutdownCtx.Done():
+		slog.Warn("timed out waiting for ingestion workers")
 	}
 
 	slog.Info("server stopped")

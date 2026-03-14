@@ -6,7 +6,7 @@ import ModelLayer, { type ModelEntity } from './ModelLayer'
 
 export default function FlightLayer() {
   const visible = useLayerVisibilityStore((s) => s.layers.flights)
-  const flights = useFlightStore((s) => s.flights)
+  const flights = useFlightStore((s) => s.entities)
 
   const entities = useMemo(() => {
     const map = new Map<string, ModelEntity>()

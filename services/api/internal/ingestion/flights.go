@@ -30,8 +30,10 @@ type FlightWorker struct {
 	rdb      *redis.Client
 	username string
 	password string
+	client   *http.Client
 
-	prev map[string]models.FlightEntity
+	prev     map[string]models.FlightEntity
+	failures int
 }
 
 // NewFlightWorker creates a new FlightWorker.
@@ -41,6 +43,7 @@ func NewFlightWorker(pool *pgxpool.Pool, rdb *redis.Client, username, password s
 		rdb:      rdb,
 		username: username,
 		password: password,
+		client:   NewHTTPClient(30 * time.Second),
 		prev:     make(map[string]models.FlightEntity),
 	}
 }
@@ -67,10 +70,17 @@ func (w *FlightWorker) Start(ctx context.Context) error {
 func (w *FlightWorker) tick(ctx context.Context) {
 	entities, err := w.fetch(ctx)
 	if err != nil {
-		slog.Error("flight fetch failed", "error", err)
+		w.failures++
+		backoff := Backoff(w.failures, time.Second, maxBackoffDuration)
+		slog.Error("flight fetch failed", "error", err, "failures", w.failures, "backoff", backoff)
+		select {
+		case <-ctx.Done():
+		case <-time.After(backoff):
+		}
 		return
 	}
 
+	w.failures = 0
 	slog.Info("fetched flights", "count", len(entities))
 
 	// Build current state map.
@@ -132,7 +142,7 @@ func (w *FlightWorker) fetch(ctx context.Context) ([]models.FlightEntity, error)
 		req.SetBasicAuth(w.username, w.password)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := w.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("http get: %w", err)
 	}
@@ -234,26 +244,13 @@ func toFloat64(v interface{}) (float64, bool) {
 }
 
 func (w *FlightWorker) publish(ctx context.Context, action string, entities []models.FlightEntity) {
-	// Convert to []any for DeltaMessage.
 	anyEntities := make([]any, len(entities))
 	for i, e := range entities {
 		anyEntities[i] = e
 	}
 
-	msg := models.DeltaMessage{
-		Layer:    "flights",
-		Action:   action,
-		Entities: anyEntities,
-	}
-
-	data, err := json.Marshal(msg)
-	if err != nil {
-		slog.Error("flight marshal error", "error", err)
-		return
-	}
-
-	if err := w.rdb.Publish(ctx, flightRedisChannel, data).Err(); err != nil {
-		slog.Error("flight publish error", "error", err)
+	if err := PublishDelta(ctx, w.rdb, flightRedisChannel, "flights", action, anyEntities); err != nil {
+		LogPublishError("flights", err)
 	}
 }
 

@@ -22,7 +22,6 @@ import { useSatelliteStore } from '../../stores/satelliteStore'
 
 const ORBIT_SAMPLE_COUNT = 360
 const ORBIT_COLOR = Color.CYAN.withAlpha(0.6)
-const NADIR_COLOR = Color.CYAN.withAlpha(0.4)
 
 // Custom animated dash material using czm_frameNumber (auto-incremented by Cesium).
 const ANIMATED_DASH_TYPE = 'AnimatedDash'
@@ -63,7 +62,7 @@ function ensureMaterialType() {
 export default function SatelliteOrbitOverlay() {
   const { viewer: rawViewer } = useCesium()
   const selected = useSelectedEntityStore((s) => s.selected)
-  const satellites = useSatelliteStore((s) => s.satellites)
+  const satellites = useSatelliteStore((s) => s.entities)
 
   const orbitCollectionRef = useRef<PolylineCollection | null>(null)
   const nadirCollectionRef = useRef<PolylineCollection | null>(null)
@@ -104,7 +103,9 @@ export default function SatelliteOrbitOverlay() {
     const stepMinutes = periodMinutes / ORBIT_SAMPLE_COUNT
 
     // Sample orbit points centered on "now" so we see half an orbit behind and half ahead.
+    // Store both Cartesian3 positions and lng values to avoid re-propagating for gap detection.
     const orbitPositions: Cartesian3[] = []
+    const orbitLngs: number[] = []
 
     for (let i = 0; i <= ORBIT_SAMPLE_COUNT; i++) {
       const minutesFromNow = -halfPeriod + i * stepMinutes
@@ -123,41 +124,21 @@ export default function SatelliteOrbitOverlay() {
       if (isNaN(latDeg) || isNaN(lngDeg) || isNaN(altMeters)) continue
 
       orbitPositions.push(Cartesian3.fromDegrees(lngDeg, latDeg, altMeters))
+      orbitLngs.push(lngDeg)
     }
 
     if (orbitPositions.length < 2) return
 
     // Split orbit polyline at large longitude jumps (antimeridian crossings)
-    // to avoid lines cutting across the globe.
+    // to avoid lines cutting across the globe. Reuses stored lng values.
     const segments: Cartesian3[][] = []
     let currentSegment: Cartesian3[] = [orbitPositions[0]]
 
     for (let i = 1; i < orbitPositions.length; i++) {
-      // Recompute lng for gap detection.
-      const minutesFromNowPrev = -halfPeriod + (i - 1) * stepMinutes
-      const minutesFromNowCurr = -halfPeriod + i * stepMinutes
-      const prevTime = new Date(now.getTime() + minutesFromNowPrev * 60000)
-      const currTime = new Date(now.getTime() + minutesFromNowCurr * 60000)
-
-      const prevPV = propagate(satrec, prevTime)
-      const currPV = propagate(satrec, currTime)
-
-      if (
-        prevPV && typeof prevPV.position !== 'boolean' &&
-        currPV && typeof currPV.position !== 'boolean'
-      ) {
-        const prevGeo = eciToGeodetic(prevPV.position, gstime(prevTime))
-        const currGeo = eciToGeodetic(currPV.position, gstime(currTime))
-        const prevLng = degreesLong(prevGeo.longitude)
-        const currLng = degreesLong(currGeo.longitude)
-
-        if (Math.abs(currLng - prevLng) > 180) {
-          // Antimeridian crossing — start a new segment.
-          if (currentSegment.length >= 2) segments.push(currentSegment)
-          currentSegment = []
-        }
+      if (Math.abs(orbitLngs[i] - orbitLngs[i - 1]) > 180) {
+        if (currentSegment.length >= 2) segments.push(currentSegment)
+        currentSegment = []
       }
-
       currentSegment.push(orbitPositions[i])
     }
     if (currentSegment.length >= 2) segments.push(currentSegment)
@@ -196,7 +177,7 @@ export default function SatelliteOrbitOverlay() {
         Cartesian3.fromDegrees(sat.lng, sat.lat, 0),
       ],
       width: 1.0,
-      material: Material.fromType('Color', { color: NADIR_COLOR }),
+      material: Material.fromType('Color', { color: Color.CYAN.withAlpha(0.4) }),
     })
     viewer.scene.primitives.add(nadirCollection)
     nadirCollectionRef.current = nadirCollection
