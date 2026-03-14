@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
@@ -329,28 +328,36 @@ func (w *FlightWorker) persist(ctx context.Context, entities []models.FlightEnti
 		return
 	}
 
-	rows := make([][]interface{}, len(entities))
-	for i, e := range entities {
-		rows[i] = []interface{}{
-			e.ID,
-			e.Callsign,
-			e.OriginCountry,
-			fmt.Sprintf("SRID=4326;POINT(%f %f)", e.Lng, e.Lat),
-			e.Altitude,
-			e.Velocity,
-			e.Heading,
-			e.OnGround,
-			e.Source,
-			time.Now(),
-		}
-	}
+	// Build a batch INSERT with ST_SetSRID(ST_MakePoint(...)) so PostGIS
+	// converts text coordinates to geography on the server side.
+	// CopyFrom uses binary protocol which can't handle EWKT text strings.
+	const batchSize = 1000
+	now := time.Now()
 
-	_, err := w.pool.CopyFrom(ctx,
-		pgx.Identifier{"flights"},
-		[]string{"icao24", "callsign", "origin_country", "position", "altitude", "velocity", "heading", "on_ground", "source", "recorded_at"},
-		pgx.CopyFromRows(rows),
-	)
-	if err != nil {
-		slog.Error("flight persist error", "error", err)
+	for start := 0; start < len(entities); start += batchSize {
+		end := start + batchSize
+		if end > len(entities) {
+			end = len(entities)
+		}
+		batch := entities[start:end]
+
+		var sb strings.Builder
+		sb.WriteString("INSERT INTO flights (icao24, callsign, origin_country, position, altitude, velocity, heading, on_ground, source, recorded_at) VALUES ")
+
+		args := make([]interface{}, 0, len(batch)*11)
+		for i, e := range batch {
+			if i > 0 {
+				sb.WriteString(",")
+			}
+			p := i * 11
+			fmt.Fprintf(&sb, "($%d,$%d,$%d,ST_SetSRID(ST_MakePoint($%d,$%d),4326)::geography,$%d,$%d,$%d,$%d,$%d,$%d)",
+				p+1, p+2, p+3, p+4, p+5, p+6, p+7, p+8, p+9, p+10, p+11)
+			args = append(args, e.ID, e.Callsign, e.OriginCountry, e.Lng, e.Lat, e.Altitude, e.Velocity, e.Heading, e.OnGround, e.Source, now)
+		}
+
+		_, err := w.pool.Exec(ctx, sb.String(), args...)
+		if err != nil {
+			slog.Error("flight persist error", "error", err)
+		}
 	}
 }
