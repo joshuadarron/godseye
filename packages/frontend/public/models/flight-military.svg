@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Military aircraft - fighter jet silhouette, top-down -->
+  <!-- Fuselage -->
+  <path d="M32 4 C31 4 30 6 30 10 L30 50 C30 54 31 56 32 56 C33 56 34 54 34 50 L34 10 C34 6 33 4 32 4Z" fill="#5a6e5a" stroke="#4a5e4a" stroke-width="0.8"/>
+  <!-- Delta wings -->
+  <path d="M30 22 L10 40 L10 42 L30 34Z" fill="#4e624e" stroke="#3e523e" stroke-width="0.6"/>
+  <path d="M34 22 L54 40 L54 42 L34 34Z" fill="#4e624e" stroke="#3e523e" stroke-width="0.6"/>
+  <!-- Tail fins (angled) -->
+  <path d="M30 46 L24 52 L24 54 L30 50Z" fill="#465a46" stroke="#3e523e" stroke-width="0.5"/>
+  <path d="M34 46 L40 52 L40 54 L34 50Z" fill="#465a46" stroke="#3e523e" stroke-width="0.5"/>
+  <!-- Vertical stabilizer -->
+  <rect x="31" y="44" width="2" height="10" rx="0.5" fill="#5a6e5a" stroke="#4a5e4a" stroke-width="0.5"/>
+  <!-- Cockpit -->
+  <ellipse cx="32" cy="8" rx="1.5" ry="3" fill="#334455"/>
+  <!-- Engine exhaust -->
+  <ellipse cx="32" cy="55" rx="1.5" ry="2" fill="#ff8844" opacity="0.6"/>
+</svg>

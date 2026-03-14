@@ -46,7 +46,9 @@
       "Bash(npx vite:*)",
       "Bash(git checkout:*)",
       "Bash(go vet:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:openskynetwork.github.io)"
     ]
   }
 }

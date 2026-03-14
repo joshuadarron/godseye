@@ -2,6 +2,7 @@ import { Color } from 'cesium'
 import type { Entity } from '../types/common'
 import type { Flight } from '../types/flight'
 import { useFlightStore } from '../stores/flightStore'
+import { FLIGHT_SUBTYPES, classifyFlight } from '../stores/layerVisibilityStore'
 import { registerLayer } from './layerRegistry'
 
 const ICON_CLASS = 'w-4 h-4 shrink-0 fill-current'
@@ -25,8 +26,28 @@ registerLayer({
       heading: f.heading || 0,
     }
   },
-  iconUrl: '/models/aircraft.png',
+  iconUrl: '/models/flight-commercial.svg',
   fallbackColor: Color.CYAN,
   fallbackPixelSize: 3,
   iconScale: 0.5,
+  headingOffset: 0,
+  subtypes: FLIGHT_SUBTYPES,
+  subtypeIcons: {
+    commercial: '/models/flight-commercial.svg',
+    cargo: '/models/flight-cargo.svg',
+    military: '/models/flight-military.svg',
+    private: '/models/flight-private.svg',
+    ground: '/models/flight-ground.svg',
+  },
+  subtypeColors: {
+    commercial: Color.fromCssColorString('#4fc3f7'),
+    cargo: Color.fromCssColorString('#ffb74d'),
+    military: Color.fromCssColorString('#ef5350'),
+    private: Color.fromCssColorString('#e0e0e0'),
+    ground: Color.fromCssColorString('#78909c'),
+  },
+  classifySubtype: (entity: Entity) => {
+    const f = entity as Flight
+    return classifyFlight(f.callsign, f.onGround)
+  },
 })
