@@ -12,7 +12,6 @@ const DEFAULT_HEIGHT = 240
 const MIN_WIDTH = 260
 const MIN_HEIGHT = 160
 const GAP = 20
-const SIDEBAR_WIDTH = 288
 
 type DragMode = 'move' | 'resize' | null
 
@@ -21,7 +20,7 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function positionNearClick(clickX: number, clickY: number, w: number, h: number) {
-  const left = SIDEBAR_WIDTH
+  const left = 0
   const right = window.innerWidth
   const top = 0
   const bottom = window.innerHeight

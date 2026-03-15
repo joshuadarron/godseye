@@ -16,8 +16,6 @@ const DEFAULT_HEIGHT = 200
 const MIN_WIDTH = 260
 const MIN_HEIGHT = 140
 const GAP = 20
-/** Must match sidebar w-72 (18rem = 288px). */
-const SIDEBAR_WIDTH = 288
 
 type DragMode = 'move' | 'resize' | null
 
@@ -27,7 +25,7 @@ function clamp(value: number, min: number, max: number) {
 
 /** Globe-safe viewport bounds (excludes the sidebar). */
 function globeBounds() {
-  const left = SIDEBAR_WIDTH
+  const left = 0
   const right = window.innerWidth
   const top = 0
   const bottom = window.innerHeight
