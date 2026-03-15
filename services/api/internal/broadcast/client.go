@@ -2,17 +2,22 @@ package broadcast
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
+	"sync/atomic"
 	"time"
+
+	"github.com/joshuaferrara/godseye/services/api/internal/models"
 
 	"nhooyr.io/websocket"
 )
 
 // Client represents a connected WebSocket client.
 type Client struct {
-	conn *websocket.Conn
-	send chan []byte
-	b    *Broadcaster
+	conn   *websocket.Conn
+	send   chan []byte
+	b      *Broadcaster
+	bounds atomic.Pointer[models.ViewportBounds]
 }
 
 // NewClient creates a new Client with a buffered send channel.
@@ -22,6 +27,11 @@ func NewClient(conn *websocket.Conn, b *Broadcaster) *Client {
 		send: make(chan []byte, 256),
 		b:    b,
 	}
+}
+
+// Bounds returns the client's current viewport bounds, or nil if not yet reported.
+func (c *Client) Bounds() *models.ViewportBounds {
+	return c.bounds.Load()
 }
 
 // WritePump reads messages from the send channel and writes them to the WebSocket connection.
@@ -52,8 +62,7 @@ func (c *Client) WritePump(ctx context.Context) {
 	}
 }
 
-// ReadPump reads messages from the WebSocket connection.
-// Currently only used to detect client disconnection.
+// ReadPump reads messages from the WebSocket connection and processes client commands.
 func (c *Client) ReadPump(ctx context.Context) {
 	defer func() {
 		c.b.Unregister(c)
@@ -61,11 +70,33 @@ func (c *Client) ReadPump(ctx context.Context) {
 	}()
 
 	for {
-		_, _, err := c.conn.Read(ctx)
+		_, data, err := c.conn.Read(ctx)
 		if err != nil {
 			// Client disconnected or error occurred.
 			slog.Debug("client read error, disconnecting", "error", err)
 			return
+		}
+
+		// Parse incoming messages to handle viewport updates.
+		var envelope struct {
+			Type string `json:"type"`
+		}
+		if err := json.Unmarshal(data, &envelope); err != nil {
+			continue
+		}
+
+		switch envelope.Type {
+		case "viewport":
+			var msg models.ViewportMessage
+			if err := json.Unmarshal(data, &msg); err != nil {
+				slog.Warn("failed to parse viewport message", "error", err)
+				continue
+			}
+			b := msg.Bounds
+			c.bounds.Store(&b)
+			slog.Debug("client viewport updated",
+				"west", b.West, "south", b.South,
+				"east", b.East, "north", b.North)
 		}
 	}
 }

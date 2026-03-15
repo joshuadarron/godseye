@@ -10,6 +10,16 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 
 const MAX_BACKOFF_MS = 30_000
 
+// Module-level WebSocket reference for use outside React components.
+let activeWs: WebSocket | null = null
+
+/** Send a raw string message over the active WebSocket connection. */
+export function sendMessage(data: string): void {
+  if (activeWs && activeWs.readyState === WebSocket.OPEN) {
+    activeWs.send(data)
+  }
+}
+
 export function useWebSocket() {
   const [status, setStatus] = useState<ConnectionStatus>('disconnected')
   const [lastMessage, setLastMessage] = useState<DeltaMessage | null>(null)
@@ -59,6 +69,7 @@ export function useWebSocket() {
     setStatus('connecting')
     const ws = new WebSocket(url)
     wsRef.current = ws
+    activeWs = ws
 
     ws.onopen = () => {
       setStatus('connected')
@@ -79,6 +90,7 @@ export function useWebSocket() {
 
     ws.onclose = () => {
       setStatus('disconnected')
+      activeWs = null
       scheduleReconnect()
     }
 

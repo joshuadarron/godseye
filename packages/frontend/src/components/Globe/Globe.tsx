@@ -4,6 +4,7 @@ import { Viewer, Globe as CesiumGlobe, Scene, SkyAtmosphere, useCesium } from 'r
 import GenericEntityLayer from './GenericEntityLayer'
 import { layerRegistry } from '../../registries/layerRegistry'
 import { useWebSocket } from '../../hooks/useWebSocket'
+import { useViewportBounds } from '../../hooks/useViewportBounds'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useLayerVisibilityStore } from '../../stores/layerVisibilityStore'
 
@@ -43,6 +44,12 @@ function ViewerInit() {
     viewer.resize()
   }, [rawViewer])
 
+  return null
+}
+
+/** Sends camera viewport bounds to the server on camera move. */
+function ViewportBoundsReporter() {
+  useViewportBounds()
   return null
 }
 
@@ -182,6 +189,7 @@ export default function Globe() {
         dynamicAtmosphereLightingFromSun
       />
       <ViewerInit />
+      <ViewportBoundsReporter />
       <PickHandler />
       {registrations.map((reg) => (
         <GenericEntityLayer key={reg.key} registration={reg} />

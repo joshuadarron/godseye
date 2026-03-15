@@ -2,6 +2,7 @@ package broadcast
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"sync"
 
@@ -15,6 +16,14 @@ var DefaultChannels = []string{
 	"channel:trains",
 	"channel:satellites",
 	"channel:events",
+}
+
+// spatialLayers are layers whose entities contain lat/lng and should be filtered.
+var spatialLayers = map[string]bool{
+	"flights":    true,
+	"vessels":    true,
+	"trains":     true,
+	"satellites": true,
 }
 
 // Broadcaster subscribes to Redis pub/sub channels and fans out messages
@@ -87,15 +96,106 @@ func (b *Broadcaster) Start(ctx context.Context) error {
 	}
 }
 
-// fanOut sends a message to every connected client. Slow clients whose
-// send buffers are full are collected and unregistered after releasing the
-// read lock to avoid a RLock → Lock deadlock.
+// positionedEntity extracts only the position fields from an entity JSON object.
+type positionedEntity struct {
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
+}
+
+// deltaEnvelope is the outer structure of a delta message, with entities kept as raw JSON.
+type deltaEnvelope struct {
+	Layer    string            `json:"layer"`
+	Action   string            `json:"action"`
+	Entities []json.RawMessage `json:"entities"`
+}
+
+// fanOut sends a message to every connected client. For spatial layers, entities
+// are filtered per-client based on their reported viewport bounds.
+// Slow clients whose send buffers are full are collected and unregistered after
+// releasing the read lock to avoid a RLock → Lock deadlock.
 func (b *Broadcaster) fanOut(data []byte) {
 	b.mu.RLock()
 	var slow []*Client
+
+	// Parse the message once to determine if spatial filtering applies.
+	var envelope deltaEnvelope
+	parsed := false
+	var positions []positionedEntity
+	needsFiltering := false
+
 	for c := range b.clients {
+		bounds := c.Bounds()
+
+		// Fast path: no bounds set yet — send unfiltered raw bytes.
+		if bounds == nil {
+			select {
+			case c.send <- data:
+			default:
+				slow = append(slow, c)
+			}
+			continue
+		}
+
+		// Lazy parse on first client that has bounds.
+		if !parsed {
+			parsed = true
+			if err := json.Unmarshal(data, &envelope); err != nil {
+				// Can't parse — send raw to all remaining clients.
+				b.sendRawToAll(data, &slow)
+				break
+			}
+			// Only filter spatial layers with upsert action.
+			if spatialLayers[envelope.Layer] && envelope.Action == "upsert" {
+				needsFiltering = true
+				positions = make([]positionedEntity, len(envelope.Entities))
+				for i, raw := range envelope.Entities {
+					json.Unmarshal(raw, &positions[i]) //nolint:errcheck
+				}
+			}
+		}
+
+		if !needsFiltering {
+			select {
+			case c.send <- data:
+			default:
+				slow = append(slow, c)
+			}
+			continue
+		}
+
+		// Filter entities to those within this client's viewport.
+		filtered := make([]json.RawMessage, 0, len(envelope.Entities))
+		for i, pos := range positions {
+			if bounds.Contains(pos.Lat, pos.Lng) {
+				filtered = append(filtered, envelope.Entities[i])
+			}
+		}
+
+		// Skip sending if no entities match.
+		if len(filtered) == 0 {
+			continue
+		}
+
+		// If all entities match, send the original bytes to avoid re-marshaling.
+		var msg []byte
+		if len(filtered) == len(envelope.Entities) {
+			msg = data
+		} else {
+			out := deltaEnvelope{
+				Layer:    envelope.Layer,
+				Action:   envelope.Action,
+				Entities: filtered,
+			}
+			var err error
+			msg, err = json.Marshal(out)
+			if err != nil {
+				slog.Warn("failed to marshal filtered message", "error", err)
+				continue
+			}
+		}
+
 		select {
-		case c.send <- data:
+		case c.send <- msg:
 		default:
 			slow = append(slow, c)
 		}
@@ -105,5 +205,17 @@ func (b *Broadcaster) fanOut(data []byte) {
 	for _, c := range slow {
 		slog.Warn("dropping slow client")
 		b.Unregister(c)
+	}
+}
+
+// sendRawToAll is a fallback that sends raw bytes to all remaining clients
+// when the message can't be parsed for filtering.
+func (b *Broadcaster) sendRawToAll(data []byte, slow *[]*Client) {
+	for c := range b.clients {
+		select {
+		case c.send <- data:
+		default:
+			*slow = append(*slow, c)
+		}
 	}
 }

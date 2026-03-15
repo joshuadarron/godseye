@@ -10,6 +10,7 @@ import {
   VerticalOrigin,
   type Billboard,
   type PointPrimitive,
+  type Rectangle,
 } from 'cesium'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 
@@ -39,6 +40,18 @@ interface ModelLayerProps {
 
 // Shared scratch objects to avoid allocations in the hot loop.
 const scratchPosition = new Cartesian3()
+
+/** Check if a lon/lat point is inside a view rectangle (degrees vs radians). */
+function inViewRect(lon: number, lat: number, rect: Rectangle): boolean {
+  const lonRad = CesiumMath.toRadians(lon)
+  const latRad = CesiumMath.toRadians(lat)
+  if (latRad < rect.south || latRad > rect.north) return false
+  if (rect.west <= rect.east) {
+    return lonRad >= rect.west && lonRad <= rect.east
+  }
+  // Anti-meridian crossing.
+  return lonRad >= rect.west || lonRad <= rect.east
+}
 
 /**
  * Renders entities as rotated billboards from a single BillboardCollection.
@@ -112,10 +125,15 @@ export default function ModelLayer({
 
     const useIcon = iconAvailable === true
 
+    // Client-side frustum culling: skip entities outside the current view rectangle.
+    // This is defense-in-depth — the server already filters, but this catches edge
+    // cases during rapid panning or before the first viewport message is sent.
+    const viewRect = scene.camera.computeViewRectangle()
+
     if (useIcon) {
       const bMap = billboardMapRef.current
 
-      // Remove stale entities.
+      // Remove stale entities (no longer in data OR moved out of view).
       for (const [id, bb] of bMap) {
         if (!entities.has(id)) {
           billboards.remove(bb)
@@ -125,6 +143,17 @@ export default function ModelLayer({
 
       // Add new / update existing.
       entities.forEach((entity, id) => {
+        // Cull entities outside the view rectangle (skip if rect unavailable).
+        if (viewRect && !inViewRect(entity.lon, entity.lat, viewRect)) {
+          // If this entity already has a billboard, remove it.
+          const stale = bMap.get(id)
+          if (stale) {
+            billboards.remove(stale)
+            bMap.delete(id)
+          }
+          return
+        }
+
         const isSelected = id === selectedId
         const existing = bMap.get(id)
 
@@ -166,6 +195,16 @@ export default function ModelLayer({
 
       // Add new / update existing.
       entities.forEach((entity, id) => {
+        // Cull entities outside the view rectangle.
+        if (viewRect && !inViewRect(entity.lon, entity.lat, viewRect)) {
+          const stale = pMap.get(id)
+          if (stale) {
+            points.remove(stale)
+            pMap.delete(id)
+          }
+          return
+        }
+
         const isSelected = id === selectedId
         const existing = pMap.get(id)
 
