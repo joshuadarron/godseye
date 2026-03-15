@@ -4,6 +4,8 @@ import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useFlightStore } from '../../stores/flightStore'
 import { lookupRoute } from '../../utils/routeLookup'
 import type { FlightRoute } from '../../utils/routeLookup'
+import { lookupAircraft } from '../../utils/aircraftLookup'
+import type { AircraftMeta } from '../../utils/aircraftLookup'
 
 const DEFAULT_WIDTH = 360
 const DEFAULT_HEIGHT = 240
@@ -95,15 +97,25 @@ export default function FlightDetailPanel() {
   }, [])
 
   const [route, setRoute] = useState<FlightRoute | null>(null)
+  const [aircraft, setAircraft] = useState<AircraftMeta | null>(null)
 
   useEffect(() => {
-    if (!selected || selected.layer !== 'flights') { setRoute(null); return }
+    if (!selected || selected.layer !== 'flights') { setRoute(null); setAircraft(null); return }
     const flight = useFlightStore.getState().entities.get(selected.entityId)
-    if (!flight?.callsign) { setRoute(null); return }
     let cancelled = false
-    lookupRoute(flight.callsign, flight.lat, flight.lng).then((r) => {
-      if (!cancelled) setRoute(r)
+
+    if (flight?.callsign) {
+      lookupRoute(flight.callsign, flight.lat, flight.lng).then((r) => {
+        if (!cancelled) setRoute(r)
+      })
+    } else {
+      setRoute(null)
+    }
+
+    lookupAircraft(selected.entityId).then((a) => {
+      if (!cancelled) setAircraft(a)
     })
+
     return () => { cancelled = true }
   }, [selected])
 
@@ -143,13 +155,20 @@ export default function FlightDetailPanel() {
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           <DataField label="ICAO" value={f.id} />
           <DataField label="Callsign" value={f.callsign || '—'} />
+          <DataField label="Registration" value={aircraft?.reg || '—'} />
+          <DataField label="Type" value={aircraft ? `${aircraft.type}${aircraft.model ? ` — ${aircraft.model}` : ''}` : '—'} />
+          <DataField label="Operator" value={aircraft?.op || '—'} />
           <DataField label="Origin" value={f.originCountry || '—'} />
           <DataField label="Source" value={f.source} />
+          <DataField label="Category" value={categoryLabel(f.category)} />
           <DataField label="Latitude" value={`${f.lat.toFixed(4)}\u00B0`} />
           <DataField label="Longitude" value={`${f.lng.toFixed(4)}\u00B0`} />
-          <DataField label="Altitude" value={f.onGround ? 'Ground' : `${f.altitude.toFixed(0)} m`} />
+          <DataField label="Baro Alt." value={f.onGround ? 'Ground' : `${Math.round(f.altitude * 3.281).toLocaleString()} ft`} />
+          <DataField label="Geo Alt." value={f.onGround ? 'Ground' : `${Math.round(f.geoAltitude * 3.281).toLocaleString()} ft`} />
           <DataField label="Speed" value={`${f.velocity.toFixed(1)} m/s`} />
           <DataField label="Heading" value={`${f.heading.toFixed(1)}\u00B0`} />
+          <DataField label="Vert. Rate" value={formatVerticalRate(f.verticalRate)} />
+          <DataField label="Squawk" value={f.squawk || '—'} />
           <DataField label="Status" value={f.onGround ? 'On Ground' : 'Airborne'} />
           <DataField label="Departure" value={route ? `${route.departure.name} (${route.departure.icao})` : '—'} />
           <DataField label="Arrival" value={route ? `${route.arrival.name} (${route.arrival.icao})` : '—'} />
@@ -166,6 +185,34 @@ export default function FlightDetailPanel() {
       </div>
     </div>
   )
+}
+
+const CATEGORY_LABELS: Record<number, string> = {
+  0: 'No info',
+  1: 'No category',
+  2: 'Light',
+  3: 'Small',
+  4: 'Large',
+  5: 'High vortex',
+  6: 'Heavy',
+  7: 'High perf',
+  8: 'Rotorcraft',
+  9: 'Glider',
+  10: 'Lighter-than-air',
+  11: 'Parachutist',
+  12: 'Ultralight',
+  14: 'UAV',
+  15: 'Space vehicle',
+}
+
+function categoryLabel(cat: number): string {
+  return CATEGORY_LABELS[cat] ?? `Cat ${cat}`
+}
+
+function formatVerticalRate(rate: number): string {
+  if (rate === 0) return '0 ft/min'
+  const ftPerMin = Math.round(rate * 196.85)
+  return `${ftPerMin > 0 ? '+' : ''}${ftPerMin.toLocaleString()} ft/min`
 }
 
 const DataField = memo(function DataField({ label, value }: { label: string; value: string }) {

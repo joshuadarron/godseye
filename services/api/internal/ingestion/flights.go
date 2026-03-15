@@ -280,6 +280,15 @@ func parseOpenSkyState(s []interface{}) (models.FlightEntity, bool) {
 	velocity, _ := toFloat64(s[9])
 	heading, _ := toFloat64(s[10])
 
+	verticalRate, _ := toFloat64(s[11])
+	geoAltitude, _ := toFloat64(s[13])
+	squawk, _ := s[14].(string)
+	var category int
+	if len(s) > 17 {
+		cat, _ := toFloat64(s[17])
+		category = int(cat)
+	}
+
 	source := "opensky"
 	if src, _ := toFloat64(s[16]); src == 1 {
 		source = "adsb"
@@ -296,6 +305,10 @@ func parseOpenSkyState(s []interface{}) (models.FlightEntity, bool) {
 		Heading:       heading,
 		OnGround:      onGround,
 		Source:        source,
+		VerticalRate:  verticalRate,
+		GeoAltitude:   geoAltitude,
+		Squawk:        squawk,
+		Category:      category,
 	}, true
 }
 
@@ -342,17 +355,17 @@ func (w *FlightWorker) persist(ctx context.Context, entities []models.FlightEnti
 		batch := entities[start:end]
 
 		var sb strings.Builder
-		sb.WriteString("INSERT INTO flights (icao24, callsign, origin_country, position, altitude, velocity, heading, on_ground, source, recorded_at) VALUES ")
+		sb.WriteString("INSERT INTO flights (icao24, callsign, origin_country, position, altitude, velocity, heading, on_ground, source, recorded_at, vertical_rate, geo_altitude, squawk, category) VALUES ")
 
-		args := make([]interface{}, 0, len(batch)*11)
+		args := make([]interface{}, 0, len(batch)*15)
 		for i, e := range batch {
 			if i > 0 {
 				sb.WriteString(",")
 			}
-			p := i * 11
-			fmt.Fprintf(&sb, "($%d,$%d,$%d,ST_SetSRID(ST_MakePoint($%d,$%d),4326)::geography,$%d,$%d,$%d,$%d,$%d,$%d)",
-				p+1, p+2, p+3, p+4, p+5, p+6, p+7, p+8, p+9, p+10, p+11)
-			args = append(args, e.ID, e.Callsign, e.OriginCountry, e.Lng, e.Lat, e.Altitude, e.Velocity, e.Heading, e.OnGround, e.Source, now)
+			p := i * 15
+			fmt.Fprintf(&sb, "($%d,$%d,$%d,ST_SetSRID(ST_MakePoint($%d,$%d),4326)::geography,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
+				p+1, p+2, p+3, p+4, p+5, p+6, p+7, p+8, p+9, p+10, p+11, p+12, p+13, p+14, p+15)
+			args = append(args, e.ID, e.Callsign, e.OriginCountry, e.Lng, e.Lat, e.Altitude, e.Velocity, e.Heading, e.OnGround, e.Source, now, e.VerticalRate, e.GeoAltitude, e.Squawk, e.Category)
 		}
 
 		_, err := w.pool.Exec(ctx, sb.String(), args...)

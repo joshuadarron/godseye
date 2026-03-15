@@ -24,6 +24,10 @@ export interface Flight extends Entity {
   heading: number
   onGround: boolean
   source: string
+  verticalRate: number
+  geoAltitude: number
+  squawk: string
+  category: number
 }
 
 /** Computed satellite position derived from TLE propagation. */

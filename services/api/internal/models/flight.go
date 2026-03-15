@@ -12,4 +12,8 @@ type FlightEntity struct {
 	Heading       float64 `json:"heading"`
 	OnGround      bool    `json:"onGround"`
 	Source        string  `json:"source"`
+	VerticalRate  float64 `json:"verticalRate"`
+	GeoAltitude   float64 `json:"geoAltitude"`
+	Squawk        string  `json:"squawk"`
+	Category      int     `json:"category"`
 }

@@ -1,0 +1,4 @@
+ALTER TABLE flights DROP COLUMN IF EXISTS vertical_rate;
+ALTER TABLE flights DROP COLUMN IF EXISTS geo_altitude;
+ALTER TABLE flights DROP COLUMN IF EXISTS squawk;
+ALTER TABLE flights DROP COLUMN IF EXISTS category;
