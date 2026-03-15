@@ -10,6 +10,7 @@ import {
 } from 'satellite.js'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useSatelliteStore } from '../../stores/satelliteStore'
+import { layerRegistry } from '../../registries/layerRegistry'
 
 const DEFAULT_WIDTH = 360
 const DEFAULT_HEIGHT = 200
@@ -109,6 +110,13 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
 
   if (!isOpen || !sat) return null
 
+  const reg = layerRegistry.get('satellites')
+  let entityIcon = reg?.iconUrl ?? ''
+  if (reg?.classifySubtype && reg.subtypeIcons) {
+    const subtype = reg.classifySubtype(sat)
+    entityIcon = reg.subtypeIcons[subtype] ?? entityIcon
+  }
+
   const displayLat = livePos?.lat ?? sat.lat
   const displayLng = livePos?.lng ?? sat.lng
   const displayAlt = livePos?.alt ?? sat.altitude
@@ -125,9 +133,12 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
         onPointerDown={onMoveDown}
         className="flex items-center justify-between px-4 py-2.5 bg-black/60 backdrop-blur-md cursor-grab active:cursor-grabbing select-none border-b border-white/[0.06] shrink-0"
       >
-        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 truncate pr-2">
-          {sat.name}
-        </h2>
+        <div className="flex items-center gap-2 min-w-0">
+          {entityIcon && <img src={entityIcon} alt="" className="w-5 h-5 opacity-60" />}
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 truncate">
+            {sat.name}
+          </h2>
+        </div>
         <Button
           onClick={clearSelected}
           className="text-white/30 hover:text-white/60 text-lg leading-none cursor-pointer shrink-0 transition-colors"

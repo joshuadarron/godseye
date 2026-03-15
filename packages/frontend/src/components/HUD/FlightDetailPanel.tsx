@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@headlessui/react'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useFlightStore } from '../../stores/flightStore'
+import { layerRegistry } from '../../registries/layerRegistry'
 import { lookupRoute } from '../../utils/routeLookup'
 import type { FlightRoute } from '../../utils/routeLookup'
 import { lookupAircraft } from '../../utils/aircraftLookup'
@@ -109,6 +110,13 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
 
   if (!isOpen || !f) return null
 
+  const reg = layerRegistry.get('flights')
+  let entityIcon = reg?.iconUrl ?? ''
+  if (reg?.classifySubtype && reg.subtypeIcons) {
+    const subtype = reg.classifySubtype(f)
+    entityIcon = reg.subtypeIcons[subtype] ?? entityIcon
+  }
+
   return (
     <div
       className="fixed z-[100] flex flex-col rounded-lg overflow-hidden border border-white/[0.06] shadow-2xl"
@@ -120,9 +128,12 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
         onPointerDown={onMoveDown}
         className="flex items-center justify-between px-4 py-2.5 bg-black/60 backdrop-blur-md cursor-grab active:cursor-grabbing select-none border-b border-white/[0.06] shrink-0"
       >
-        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 truncate pr-2">
-          {f.callsign || f.id}
-        </h2>
+        <div className="flex items-center gap-2 min-w-0">
+          {entityIcon && <img src={entityIcon} alt="" className="w-5 h-5 opacity-60" />}
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 truncate">
+            {f.callsign || f.id}
+          </h2>
+        </div>
         <Button
           onClick={clearSelected}
           className="text-white/30 hover:text-white/60 text-lg leading-none cursor-pointer shrink-0 transition-colors"
