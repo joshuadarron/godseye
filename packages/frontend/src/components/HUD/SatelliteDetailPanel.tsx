@@ -8,176 +8,42 @@ import {
   degreesLat,
   degreesLong,
 } from 'satellite.js'
-import { useSelectedEntityStore, type ScreenRect } from '../../stores/selectedEntityStore'
+import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useSatelliteStore } from '../../stores/satelliteStore'
 
 const DEFAULT_WIDTH = 360
 const DEFAULT_HEIGHT = 200
 const MIN_WIDTH = 260
 const MIN_HEIGHT = 140
-const GAP = 20
 
 type DragMode = 'move' | 'resize' | null
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value))
-}
-
-/** Globe-safe viewport bounds (excludes the sidebar). */
-function globeBounds() {
-  const left = 0
-  const right = window.innerWidth
-  const top = 0
-  const bottom = window.innerHeight
-  return { left, right, top, bottom }
-}
-
-/**
- * Pick the side (right, left, below, above) of the orbit bounding box
- * that has the largest area, then place the modal there.
- */
-function positionAroundOrbit(
-  bounds: ScreenRect,
-  clickX: number,
-  clickY: number,
-  w: number,
-  h: number,
-) {
-  const g = globeBounds()
-  const gw = g.right - g.left
-  const gh = g.bottom - g.top
-
-  // Available space on each side of the orbit bbox within the globe viewport.
-  const spaceRight = g.right - bounds.maxX - GAP
-  const spaceLeft = bounds.minX - g.left - GAP
-  const spaceBelow = g.bottom - bounds.maxY - GAP
-  const spaceAbove = bounds.minY - g.top - GAP
-
-  type Placement = { x: number; y: number }
-  const candidates: { area: number; pos: Placement }[] = []
-
-  // Right of orbit.
-  if (spaceRight >= w) {
-    candidates.push({
-      area: spaceRight * gh,
-      pos: {
-        x: bounds.maxX + GAP,
-        y: clamp(clickY - h / 2, g.top + GAP, g.bottom - h - GAP),
-      },
-    })
-  }
-
-  // Left of orbit.
-  if (spaceLeft >= w) {
-    candidates.push({
-      area: spaceLeft * gh,
-      pos: {
-        x: Math.max(g.left + GAP, bounds.minX - GAP - w),
-        y: clamp(clickY - h / 2, g.top + GAP, g.bottom - h - GAP),
-      },
-    })
-  }
-
-  // Below orbit.
-  if (spaceBelow >= h) {
-    candidates.push({
-      area: gw * spaceBelow,
-      pos: {
-        x: clamp(clickX - w / 2, g.left + GAP, g.right - w - GAP),
-        y: bounds.maxY + GAP,
-      },
-    })
-  }
-
-  // Above orbit.
-  if (spaceAbove >= h) {
-    candidates.push({
-      area: gw * spaceAbove,
-      pos: {
-        x: clamp(clickX - w / 2, g.left + GAP, g.right - w - GAP),
-        y: bounds.minY - GAP - h,
-      },
-    })
-  }
-
-  if (candidates.length > 0) {
-    candidates.sort((a, b) => b.area - a.area)
-    const best = candidates[0].pos
-    return { x: Math.round(best.x), y: Math.round(best.y) }
-  }
-
-  // Fallback: place to the right of the click point within globe area.
-  return {
-    x: Math.round(clamp(clickX + GAP, g.left + GAP, g.right - w - GAP)),
-    y: Math.round(clamp(clickY - h / 2, g.top + GAP, g.bottom - h - GAP)),
-  }
-}
-
-/** Simple fallback when no orbit bounds are available. */
-function positionNearClick(clickX: number, clickY: number, w: number, h: number) {
-  const g = globeBounds()
-
-  let x = clickX + GAP
-  if (x + w > g.right - GAP) x = clickX - w - GAP
-  x = clamp(x, g.left + GAP, g.right - w - GAP)
-
-  const y = clamp(clickY - h / 2, g.top + GAP, g.bottom - h - GAP)
-  return { x: Math.round(x), y: Math.round(y) }
-}
-
 export default function SatelliteDetailPanel() {
   const selected = useSelectedEntityStore((s) => s.selected)
-  const screenPos = useSelectedEntityStore((s) => s.selectedScreenPosition)
-  const orbitBounds = useSelectedEntityStore((s) => s.orbitScreenBounds)
   const clearSelected = useSelectedEntityStore((s) => s.clearSelected)
 
-  const [pos, setPos] = useState({ x: 0, y: 0 })
+  // Align with the search results panel: toolbar py-3 (12px) + search bar (~44px) + mt-3 (12px) = 68px.
+const PANEL_TOP = 119
+const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_TOP })
+
+  const [pos, setPos] = useState(defaultPos)
   const [size, setSize] = useState({ w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT })
   const [initialized, setInitialized] = useState(false)
-  const waitingForBounds = useRef(false)
 
   const mode = useRef<DragMode>(null)
   const startMouse = useRef({ x: 0, y: 0 })
   const startPos = useRef({ x: 0, y: 0 })
   const startSize = useRef({ w: 0, h: 0 })
 
-  // When selection changes, flag that we need bounds before positioning.
   useEffect(() => {
     if (selected && selected.layer === 'satellites') {
-      waitingForBounds.current = true
       setSize({ w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT })
+      setPos(defaultPos())
+      setInitialized(true)
     } else {
       setInitialized(false)
-      waitingForBounds.current = false
     }
   }, [selected])
-
-  // Position once orbit bounds arrive (or after a short fallback timeout).
-  useEffect(() => {
-    if (!selected || selected.layer !== 'satellites') return
-    if (!waitingForBounds.current) return
-
-    const clickX = screenPos?.x ?? window.innerWidth / 2
-    const clickY = screenPos?.y ?? window.innerHeight / 2
-
-    if (orbitBounds) {
-      // Bounds available — position around the trajectory.
-      waitingForBounds.current = false
-      setPos(positionAroundOrbit(orbitBounds, clickX, clickY, DEFAULT_WIDTH, DEFAULT_HEIGHT))
-      setInitialized(true)
-      return
-    }
-
-    // Fallback: if bounds don't arrive within 100ms, position near click.
-    const timer = setTimeout(() => {
-      if (waitingForBounds.current) {
-        waitingForBounds.current = false
-        setPos(positionNearClick(clickX, clickY, DEFAULT_WIDTH, DEFAULT_HEIGHT))
-        setInitialized(true)
-      }
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [selected, screenPos, orbitBounds])
 
   const onMoveDown = useCallback((e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button')) return
@@ -200,13 +66,9 @@ export default function SatelliteDetailPanel() {
     if (!mode.current) return
     const dx = e.clientX - startMouse.current.x
     const dy = e.clientY - startMouse.current.y
-
     if (mode.current === 'move') {
-      setPos({
-        x: startPos.current.x + dx,
-        y: startPos.current.y + dy,
-      })
-    } else if (mode.current === 'resize') {
+      setPos({ x: startPos.current.x + dx, y: startPos.current.y + dy })
+    } else {
       setSize({
         w: Math.max(MIN_WIDTH, startSize.current.w + dx),
         h: Math.max(MIN_HEIGHT, startSize.current.h + dy),
@@ -255,12 +117,7 @@ export default function SatelliteDetailPanel() {
   return (
     <div
       className="fixed z-[100] flex flex-col rounded-lg overflow-hidden border border-white/[0.06] shadow-2xl"
-      style={{
-        left: pos.x,
-        top: pos.y,
-        width: size.w,
-        height: size.h,
-      }}
+      style={{ left: pos.x, top: pos.y, width: size.w, height: size.h }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >

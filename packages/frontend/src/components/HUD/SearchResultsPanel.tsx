@@ -1,9 +1,11 @@
-import { memo, useMemo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
+import { Cartesian3, Math as CesiumMath } from 'cesium'
 import { useHudStore } from '../../stores/hudStore'
 import { useLayerVisibilityStore } from '../../stores/layerVisibilityStore'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { layerRegistry } from '../../registries/layerRegistry'
 import { useDebounce } from '../../hooks/useDebounce'
+import { getViewer } from '../../utils/viewerRef'
 import type { Entity } from '../../types/common'
 
 const MAX_RESULTS = 100
@@ -75,10 +77,32 @@ export default memo(function SearchResultsPanel() {
   const results = useSearchResults(debouncedQuery)
   const setSelected = useSelectedEntityStore((s) => s.setSelected)
 
+  const handleSelect = useCallback((result: SearchResult) => {
+    setSelected({ layer: result.layer, entityId: result.entity.id })
+
+    const viewer = getViewer()
+    if (!viewer) return
+
+    const rawAlt = (result.entity as any).altitude ?? 0
+    // Satellites store altitude in km; everything else in meters.
+    const alt = result.layer === 'satellites' ? rawAlt * 1000 : rawAlt
+    // Place camera above the entity: 20% above for orbital, 5km above for ground/flights.
+    const cameraAlt = alt > 100_000 ? alt * 1.4 : alt + 10_000
+    viewer.camera.flyTo({
+      destination: Cartesian3.fromDegrees(result.entity.lng, result.entity.lat, cameraAlt),
+      orientation: {
+        heading: 0,
+        pitch: CesiumMath.toRadians(-90),
+        roll: 0,
+      },
+      duration: 1.5,
+    })
+  }, [setSelected])
+
   if (!debouncedQuery || results.length === 0) return null
 
   return (
-    <div className="fixed left-2 top-24 bottom-4 w-80 z-40 overflow-y-auto scrollbar-hide pointer-events-auto flex flex-col gap-2">
+    <div className="mt-3 max-h-[calc(100vh-5rem)] w-80 overflow-y-auto scrollbar-hide flex flex-col gap-2">
       <div className="px-4 py-2">
         <span className="text-xs font-semibold uppercase tracking-widest text-white/40">
           {results.length >= MAX_RESULTS ? `${MAX_RESULTS}+` : results.length} result{results.length !== 1 ? 's' : ''}
@@ -88,7 +112,7 @@ export default memo(function SearchResultsPanel() {
       {results.map((result) => (
         <button
           key={`${result.layer}-${result.entity.id}`}
-          onClick={() => setSelected({ layer: result.layer, entityId: result.entity.id })}
+          onClick={() => handleSelect(result)}
           className="flex items-center gap-3 w-full text-left px-4 py-3 cursor-pointer select-none transition-colors bg-black/50 backdrop-blur-md border border-white/[0.08] rounded-xl hover:bg-white/10"
         >
           <div className="flex-1 min-w-0">

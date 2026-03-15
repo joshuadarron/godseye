@@ -8,7 +8,7 @@ export default memo(function SearchInput() {
   return (
     <div className="relative">
       <svg
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none"
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none z-10"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -24,12 +24,12 @@ export default memo(function SearchInput() {
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         placeholder="Search..."
-        className="w-80 pl-9 pr-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/[0.08] text-sm text-white placeholder-white/30 outline-none focus:border-white/20 transition-colors"
+        className="w-80 pl-9 pr-4 py-3 rounded-full bg-black/40 backdrop-blur-md border border-white/[0.08] text-sm text-white placeholder-white/30 outline-none focus:border-white/20 transition-colors"
       />
       {searchQuery && (
         <button
           onClick={() => setSearchQuery('')}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 cursor-pointer transition-colors text-sm leading-none"
+          className="absolute right-4 top-1/2 -translate-y-[55%] w-6 h-6 flex items-center justify-center text-white/30 hover:text-white/60 cursor-pointer transition-colors text-2xl leading-none"
         >
           &times;
         </button>

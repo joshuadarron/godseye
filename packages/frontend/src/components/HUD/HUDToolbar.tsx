@@ -1,14 +1,16 @@
 import SearchInput from './SearchInput'
+import SearchResultsPanel from './SearchResultsPanel'
 import LayerTab from './LayerTab'
 import { LAYERS } from './layerConfigs'
 
 export default function HUDToolbar() {
   return (
     <div className="fixed top-0 inset-x-0 z-50 pointer-events-none">
-      <div className="flex items-center gap-4 px-4 py-3">
+      <div className="flex items-start gap-4 px-4 py-3">
         {/* Search — left */}
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto flex flex-col">
           <SearchInput />
+          <SearchResultsPanel />
         </div>
 
         {/* Layer tabs — center */}

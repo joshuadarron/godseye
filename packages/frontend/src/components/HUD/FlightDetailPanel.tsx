@@ -11,34 +11,18 @@ const DEFAULT_WIDTH = 360
 const DEFAULT_HEIGHT = 240
 const MIN_WIDTH = 260
 const MIN_HEIGHT = 160
-const GAP = 20
 
 type DragMode = 'move' | 'resize' | null
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value))
-}
-
-function positionNearClick(clickX: number, clickY: number, w: number, h: number) {
-  const left = 0
-  const right = window.innerWidth
-  const top = 0
-  const bottom = window.innerHeight
-
-  let x = clickX + GAP
-  if (x + w > right - GAP) x = clickX - w - GAP
-  x = clamp(x, left + GAP, right - w - GAP)
-
-  const y = clamp(clickY - h / 2, top + GAP, bottom - h - GAP)
-  return { x: Math.round(x), y: Math.round(y) }
-}
-
 export default function FlightDetailPanel() {
   const selected = useSelectedEntityStore((s) => s.selected)
-  const screenPos = useSelectedEntityStore((s) => s.selectedScreenPosition)
   const clearSelected = useSelectedEntityStore((s) => s.clearSelected)
 
-  const [pos, setPos] = useState({ x: 0, y: 0 })
+  // Align with the search results panel: toolbar py-3 (12px) + search bar (~44px) + mt-3 (12px) = 68px.
+const PANEL_TOP = 119
+const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_TOP })
+
+  const [pos, setPos] = useState(defaultPos)
   const [size, setSize] = useState({ w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT })
   const [initialized, setInitialized] = useState(false)
 
@@ -49,15 +33,13 @@ export default function FlightDetailPanel() {
 
   useEffect(() => {
     if (selected && selected.layer === 'flights') {
-      const clickX = screenPos?.x ?? window.innerWidth / 2
-      const clickY = screenPos?.y ?? window.innerHeight / 2
       setSize({ w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT })
-      setPos(positionNearClick(clickX, clickY, DEFAULT_WIDTH, DEFAULT_HEIGHT))
+      setPos(defaultPos())
       setInitialized(true)
     } else {
       setInitialized(false)
     }
-  }, [selected, screenPos])
+  }, [selected])
 
   const onMoveDown = useCallback((e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button')) return
@@ -80,10 +62,9 @@ export default function FlightDetailPanel() {
     if (!mode.current) return
     const dx = e.clientX - startMouse.current.x
     const dy = e.clientY - startMouse.current.y
-
     if (mode.current === 'move') {
       setPos({ x: startPos.current.x + dx, y: startPos.current.y + dy })
-    } else if (mode.current === 'resize') {
+    } else {
       setSize({
         w: Math.max(MIN_WIDTH, startSize.current.w + dx),
         h: Math.max(MIN_HEIGHT, startSize.current.h + dy),

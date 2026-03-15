@@ -7,6 +7,7 @@ import { useWebSocket } from '../../hooks/useWebSocket'
 import { useViewportBounds } from '../../hooks/useViewportBounds'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useLayerVisibilityStore } from '../../stores/layerVisibilityStore'
+import { setViewer } from '../../utils/viewerRef'
 
 // Import registrations to populate the registry.
 import '../../registries/flights'
@@ -42,6 +43,10 @@ function ViewerInit() {
 
     // Force a resize so the viewer picks up final CSS-computed dimensions.
     viewer.resize()
+
+    // Expose the viewer for non-Resium components (e.g. search fly-to).
+    setViewer(viewer)
+    return () => setViewer(null)
   }, [rawViewer])
 
   return null
