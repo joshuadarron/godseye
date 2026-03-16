@@ -17,7 +17,7 @@ export default function SatelliteTooltip() {
 
   return (
     <div
-      className="fixed z-[100] pointer-events-none px-4 py-3 rounded-lg bg-black/60 backdrop-blur-md text-white shadow-2xl border border-white/[0.06]"
+      className="fixed z-[100] pointer-events-none px-4 py-3 rounded-xl bg-black/40 backdrop-blur-md text-white shadow-2xl border border-white/[0.08]"
       style={{ left: hoverPosition.x + 14, top: hoverPosition.y - 14 }}
     >
       <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-2">{sat.name}</p>

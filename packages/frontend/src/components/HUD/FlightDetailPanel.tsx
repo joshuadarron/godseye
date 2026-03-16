@@ -9,11 +9,8 @@ import { lookupAircraft } from '../../utils/aircraftLookup'
 import type { AircraftMeta } from '../../utils/aircraftLookup'
 
 const DEFAULT_WIDTH = 360
-const DEFAULT_HEIGHT = 240
-const MIN_WIDTH = 260
-const MIN_HEIGHT = 160
 
-type DragMode = 'move' | 'resize' | null
+type DragMode = 'move' | null
 
 export default function FlightDetailPanel() {
   const selected = useSelectedEntityStore((s) => s.selected)
@@ -24,17 +21,14 @@ const PANEL_TOP = 119
 const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_TOP })
 
   const [pos, setPos] = useState(defaultPos)
-  const [size, setSize] = useState({ w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT })
   const [initialized, setInitialized] = useState(false)
 
   const mode = useRef<DragMode>(null)
   const startMouse = useRef({ x: 0, y: 0 })
   const startPos = useRef({ x: 0, y: 0 })
-  const startSize = useRef({ w: 0, h: 0 })
 
   useEffect(() => {
     if (selected && selected.layer === 'flights') {
-      setSize({ w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT })
       setPos(defaultPos())
       setInitialized(true)
     } else {
@@ -51,26 +45,11 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   }, [pos])
 
-  const onResizeDown = useCallback((e: React.PointerEvent) => {
-    e.preventDefault()
-    mode.current = 'resize'
-    startMouse.current = { x: e.clientX, y: e.clientY }
-    startSize.current = { ...size }
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-  }, [size])
-
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!mode.current) return
     const dx = e.clientX - startMouse.current.x
     const dy = e.clientY - startMouse.current.y
-    if (mode.current === 'move') {
-      setPos({ x: startPos.current.x + dx, y: startPos.current.y + dy })
-    } else {
-      setSize({
-        w: Math.max(MIN_WIDTH, startSize.current.w + dx),
-        h: Math.max(MIN_HEIGHT, startSize.current.h + dy),
-      })
-    }
+    setPos({ x: startPos.current.x + dx, y: startPos.current.y + dy })
   }, [])
 
   const onPointerUp = useCallback(() => {
@@ -119,14 +98,14 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
 
   return (
     <div
-      className="fixed z-[100] flex flex-col rounded-lg overflow-hidden border border-white/[0.06] shadow-2xl"
-      style={{ left: pos.x, top: pos.y, width: size.w, height: size.h }}
+      className="fixed z-[100] flex flex-col rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl"
+      style={{ left: pos.x, top: pos.y, width: DEFAULT_WIDTH }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
       <div
         onPointerDown={onMoveDown}
-        className="flex items-center justify-between px-4 py-2.5 bg-black/60 backdrop-blur-md cursor-grab active:cursor-grabbing select-none border-b border-white/[0.06] shrink-0"
+        className="flex items-center justify-between px-4 py-2.5 bg-black/40 backdrop-blur-md cursor-grab active:cursor-grabbing select-none border-b border-white/[0.08] shrink-0"
       >
         <div className="flex items-center gap-2 min-w-0">
           {entityIcon && <img src={entityIcon} alt="" className="w-5 h-5 opacity-60" />}
@@ -142,7 +121,7 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
         </Button>
       </div>
 
-      <div className="flex-1 bg-black/60 backdrop-blur-md text-white overflow-auto px-4 py-3">
+      <div className="bg-black/40 backdrop-blur-md text-white px-4 py-3">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           <DataField label="ICAO" value={f.id} />
           <DataField label="Callsign" value={f.callsign || '—'} />
@@ -166,14 +145,6 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
         </div>
       </div>
 
-      <div
-        onPointerDown={onResizeDown}
-        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize"
-      >
-        <svg className="w-full h-full text-white/30 hover:text-white/60 transition-colors" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M14 14H10L14 10V14ZM14 8L8 14H6L14 6V8Z" />
-        </svg>
-      </div>
     </div>
   )
 }
