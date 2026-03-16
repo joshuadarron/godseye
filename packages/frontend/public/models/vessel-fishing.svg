@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Fishing vessel - top-down view, bow pointing up -->
+  <!-- Hull (smaller) -->
+  <path d="M32 10 L26 18 L25 46 L28 54 L36 54 L39 46 L38 18Z" fill="#5d4037" stroke="#3e2723" stroke-width="0.8"/>
+  <!-- Cabin -->
+  <rect x="28" y="36" width="8" height="10" rx="1" fill="#795548" stroke="#5d4037" stroke-width="0.6"/>
+  <!-- Fishing boom/crane (port) -->
+  <line x1="27" y1="28" x2="16" y2="16" stroke="#8d6e63" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Fishing boom/crane (starboard) -->
+  <line x1="37" y1="28" x2="48" y2="16" stroke="#8d6e63" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Deck -->
+  <rect x="27" y="22" width="10" height="12" rx="0.5" fill="#6d4c41" stroke="#5d4037" stroke-width="0.4"/>
+</svg>

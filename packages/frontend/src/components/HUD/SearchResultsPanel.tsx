@@ -36,6 +36,15 @@ function matchEntity(entity: Entity, layer: string, query: string): string | nul
     return null
   }
 
+  if (layer === 'vessels') {
+    const v = entity as any
+    if (v.name?.toLowerCase().includes(q)) return v.name
+    if (v.id.includes(q)) return v.name || v.id
+    if (v.callsign?.toLowerCase().includes(q)) return v.name || v.callsign
+    if (v.destination?.toLowerCase().includes(q)) return v.name || v.id
+    return null
+  }
+
   // Fallback for future layers
   if (entity.id.toLowerCase().includes(q)) return entity.id
   return null

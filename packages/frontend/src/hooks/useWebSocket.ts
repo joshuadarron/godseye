@@ -5,6 +5,7 @@ import { entityRegistry } from '../stores/entityRegistry'
 // Ensure stores are registered before the hook runs.
 import '../stores/flightStore'
 import '../stores/satelliteStore'
+import '../stores/vesselStore'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 

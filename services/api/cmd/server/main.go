@@ -74,7 +74,8 @@ func main() {
 	// Set up ingestion workers.
 	flightWorker := ingestion.NewFlightWorker(pool, rdb, cfg.OpenSkyClientID, cfg.OpenSkyClientSecret)
 	satelliteWorker := ingestion.NewSatelliteWorker(pool, rdb)
-	mgr := ingestion.NewManager(flightWorker, satelliteWorker)
+	vesselWorker := ingestion.NewVesselWorker(pool, rdb, cfg.AISStreamAPIKey)
+	mgr := ingestion.NewManager(flightWorker, satelliteWorker, vesselWorker)
 	go mgr.StartAll(ctx)
 
 	// Set up HTTP routes.

@@ -22,6 +22,17 @@ export const FLIGHT_SUBTYPES: Record<string, string> = {
   ground: 'Ground',
 }
 
+export const VESSEL_SUBTYPES: Record<string, string> = {
+  cargo: 'Cargo',
+  tanker: 'Tanker',
+  passenger: 'Passenger',
+  fishing: 'Fishing',
+  military: 'Military',
+  tug: 'Tug',
+  pleasure: 'Pleasure',
+  other: 'Other',
+}
+
 export const SATELLITE_SUBTYPES: Record<string, string> = {
   starlink: 'Starlink',
   oneweb: 'OneWeb',
@@ -40,6 +51,9 @@ const defaultSublayers: Record<string, SublayerMap> = {
   ),
   satellites: Object.fromEntries(
     Object.keys(SATELLITE_SUBTYPES).map((k) => [k, true]),
+  ),
+  vessels: Object.fromEntries(
+    Object.keys(VESSEL_SUBTYPES).map((k) => [k, true]),
   ),
 }
 
@@ -128,6 +142,18 @@ export function classifyFlight(callsign: string, onGround: boolean): string {
   if (/^[A-Z]{2}\d/.test(cs)) return 'commercial'
 
   return 'private'
+}
+
+/** Classify a vessel into a subtype key based on AIS ship type code. */
+export function classifyVessel(shipType: number): string {
+  if (shipType >= 70 && shipType <= 79) return 'cargo'
+  if (shipType >= 80 && shipType <= 89) return 'tanker'
+  if (shipType >= 60 && shipType <= 69) return 'passenger'
+  if (shipType === 30) return 'fishing'
+  if (shipType === 35) return 'military'
+  if (shipType === 31 || shipType === 32) return 'tug'
+  if (shipType >= 36 && shipType <= 37) return 'pleasure'
+  return 'other'
 }
 
 /** Classify a satellite name into a subtype key. */

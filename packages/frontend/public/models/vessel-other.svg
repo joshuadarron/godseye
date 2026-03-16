@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Generic vessel - top-down view, bow pointing up -->
+  <!-- Hull -->
+  <path d="M32 8 L25 16 L24 48 L28 56 L36 56 L40 48 L39 16Z" fill="#78909c" stroke="#546e7a" stroke-width="0.8"/>
+  <!-- Superstructure -->
+  <rect x="27" y="28" width="10" height="14" rx="1" fill="#90a4ae" stroke="#78909c" stroke-width="0.6"/>
+  <!-- Mast -->
+  <line x1="32" y1="20" x2="32" y2="28" stroke="#607d8b" stroke-width="1" stroke-linecap="round"/>
+  <!-- Deck -->
+  <rect x="27" y="16" width="10" height="10" rx="0.5" fill="#819ca9" stroke="#78909c" stroke-width="0.4"/>
+</svg>

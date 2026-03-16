@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Pleasure craft / yacht - top-down view, bow pointing up -->
+  <!-- Hull (sleek, narrow) -->
+  <path d="M32 6 L27 16 L26 46 L29 56 L35 56 L38 46 L37 16Z" fill="#eceff1" stroke="#b0bec5" stroke-width="0.8"/>
+  <!-- Cockpit -->
+  <rect x="28" y="36" width="8" height="10" rx="1" fill="#cfd8dc" stroke="#b0bec5" stroke-width="0.5"/>
+  <!-- Windshield -->
+  <path d="M29 36 L35 36" stroke="#42a5f5" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Foredeck -->
+  <rect x="29" y="18" width="6" height="14" rx="1" fill="#e0e0e0" stroke="#bdbdbd" stroke-width="0.4"/>
+  <!-- Bow accent -->
+  <path d="M32 6 L30 12 L34 12Z" fill="#b0bec5"/>
+</svg>

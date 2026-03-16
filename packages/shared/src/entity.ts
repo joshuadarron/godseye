@@ -39,3 +39,19 @@ export interface Satellite extends Entity {
   tle1: string
   tle2: string
 }
+
+/** Vessel position update from AIS data. */
+export interface Vessel extends Entity {
+  name: string
+  callsign: string
+  speed: number
+  course: number
+  heading: number
+  shipType: number
+  imo: number
+  destination: string
+  length: number
+  width: number
+  draught: number
+  navStatus: number
+}

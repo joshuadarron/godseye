@@ -11,7 +11,8 @@ type Config struct {
 	OpenSkyClientID     string
 	OpenSkyClientSecret string
 
-	AISHubUsername string
+	AISHubUsername    string
+	AISStreamAPIKey   string
 
 	ACLEDAPIKey         string
 	TicketmasterAPIKey  string
@@ -29,7 +30,8 @@ func Load() *Config {
 		OpenSkyClientID:     os.Getenv("OPENSKY_CLIENT_ID"),
 		OpenSkyClientSecret: os.Getenv("OPENSKY_CLIENT_SECRET"),
 
-		AISHubUsername: os.Getenv("AISHUB_USERNAME"),
+		AISHubUsername:    os.Getenv("AISHUB_USERNAME"),
+		AISStreamAPIKey:   os.Getenv("AISSTREAM_API_KEY"),
 
 		ACLEDAPIKey:         os.Getenv("ACLED_API_KEY"),
 		TicketmasterAPIKey:  os.Getenv("TICKETMASTER_API_KEY"),

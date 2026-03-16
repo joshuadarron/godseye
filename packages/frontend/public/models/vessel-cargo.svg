@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Cargo vessel - top-down view, bow pointing up -->
+  <!-- Hull -->
+  <path d="M32 4 L24 14 L22 50 L26 58 L38 58 L42 50 L40 14Z" fill="#607d8b" stroke="#455a64" stroke-width="0.8"/>
+  <!-- Bridge/superstructure (aft) -->
+  <rect x="27" y="44" width="10" height="8" rx="1" fill="#78909c" stroke="#546e7a" stroke-width="0.6"/>
+  <!-- Cargo holds -->
+  <rect x="26" y="16" width="12" height="6" rx="0.5" fill="#ffb74d" stroke="#f57c00" stroke-width="0.5"/>
+  <rect x="26" y="24" width="12" height="6" rx="0.5" fill="#ffb74d" stroke="#f57c00" stroke-width="0.5"/>
+  <rect x="26" y="32" width="12" height="6" rx="0.5" fill="#ffb74d" stroke="#f57c00" stroke-width="0.5"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Tug boat - top-down view, bow pointing up -->
+  <!-- Hull (wide, short) -->
+  <path d="M32 14 L24 22 L22 46 L26 54 L38 54 L42 46 L40 22Z" fill="#37474f" stroke="#263238" stroke-width="0.8"/>
+  <!-- Wheelhouse -->
+  <rect x="27" y="28" width="10" height="10" rx="1.5" fill="#546e7a" stroke="#37474f" stroke-width="0.6"/>
+  <!-- Bow fender -->
+  <path d="M28 16 L36 16" stroke="#f44336" stroke-width="3" stroke-linecap="round"/>
+  <!-- Tow winch (aft) -->
+  <circle cx="32" cy="48" r="3" fill="#455a64" stroke="#37474f" stroke-width="0.5"/>
+  <circle cx="32" cy="48" r="1" fill="#607d8b"/>
+  <!-- Exhaust stacks -->
+  <circle cx="30" cy="24" r="1.5" fill="#263238"/>
+  <circle cx="34" cy="24" r="1.5" fill="#263238"/>
+</svg>

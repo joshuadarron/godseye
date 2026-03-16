@@ -15,4 +15,8 @@ func RegisterRoutes(mux *http.ServeMux, pool *pgxpool.Pool) {
 	sh := &satelliteHandler{pool: pool}
 	mux.HandleFunc("GET /api/satellites", sh.list)
 	mux.HandleFunc("GET /api/satellites/{id}", sh.history)
+
+	vh := &vesselHandler{pool: pool}
+	mux.HandleFunc("GET /api/vessels", vh.list)
+	mux.HandleFunc("GET /api/vessels/{id}", vh.history)
 }

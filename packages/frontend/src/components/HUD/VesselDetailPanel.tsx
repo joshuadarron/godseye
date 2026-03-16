@@ -1,0 +1,162 @@
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { Button } from '@headlessui/react'
+import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
+import { useVesselStore } from '../../stores/vesselStore'
+import { layerRegistry } from '../../registries/layerRegistry'
+
+const DEFAULT_WIDTH = 360
+
+type DragMode = 'move' | null
+
+export default function VesselDetailPanel() {
+  const selected = useSelectedEntityStore((s) => s.selected)
+  const clearSelected = useSelectedEntityStore((s) => s.clearSelected)
+
+  const PANEL_TOP = 119
+  const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_TOP })
+
+  const [pos, setPos] = useState(defaultPos)
+  const [initialized, setInitialized] = useState(false)
+
+  const mode = useRef<DragMode>(null)
+  const startMouse = useRef({ x: 0, y: 0 })
+  const startPos = useRef({ x: 0, y: 0 })
+
+  useEffect(() => {
+    if (selected && selected.layer === 'vessels') {
+      setPos(defaultPos())
+      setInitialized(true)
+    } else {
+      setInitialized(false)
+    }
+  }, [selected])
+
+  const onMoveDown = useCallback((e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return
+    e.preventDefault()
+    mode.current = 'move'
+    startMouse.current = { x: e.clientX, y: e.clientY }
+    startPos.current = { ...pos }
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }, [pos])
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!mode.current) return
+    const dx = e.clientX - startMouse.current.x
+    const dy = e.clientY - startMouse.current.y
+    setPos({ x: startPos.current.x + dx, y: startPos.current.y + dy })
+  }, [])
+
+  const onPointerUp = useCallback(() => {
+    mode.current = null
+  }, [])
+
+  const isOpen = !!(selected && selected.layer === 'vessels' && initialized)
+  const vessel = isOpen ? useVesselStore.getState().entities.get(selected!.entityId) : null
+
+  const liveVessels = useVesselStore((s) => s.entities)
+  const liveVessel = isOpen && selected ? liveVessels.get(selected.entityId) : null
+  const v = liveVessel ?? vessel
+
+  if (!isOpen || !v) return null
+
+  const reg = layerRegistry.get('vessels')
+  let entityIcon = reg?.iconUrl ?? ''
+  if (reg?.classifySubtype && reg.subtypeIcons) {
+    const subtype = reg.classifySubtype(v)
+    entityIcon = reg.subtypeIcons[subtype] ?? entityIcon
+  }
+
+  return (
+    <div
+      className="fixed z-[100] flex flex-col rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl"
+      style={{ left: pos.x, top: pos.y, width: DEFAULT_WIDTH }}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+    >
+      <div
+        onPointerDown={onMoveDown}
+        className="flex items-center justify-between px-4 py-2.5 bg-black/40 backdrop-blur-md cursor-grab active:cursor-grabbing select-none border-b border-white/[0.08] shrink-0"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          {entityIcon && <img src={entityIcon} alt="" className="w-5 h-5 opacity-60" />}
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 truncate">
+            {v.name || v.id}
+          </h2>
+        </div>
+        <Button
+          onClick={clearSelected}
+          className="text-white/30 hover:text-white/60 text-lg leading-none cursor-pointer shrink-0 transition-colors"
+        >
+          &times;
+        </Button>
+      </div>
+
+      <div className="bg-black/40 backdrop-blur-md text-white px-4 py-3">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+          <DataField label="MMSI" value={v.id} />
+          <DataField label="Name" value={v.name || '—'} />
+          <DataField label="Callsign" value={v.callsign || '—'} />
+          <DataField label="IMO" value={v.imo ? String(v.imo) : '—'} />
+          <DataField label="Type" value={shipTypeLabel(v.shipType)} />
+          <DataField label="Nav Status" value={navStatusLabel(v.navStatus)} />
+          <DataField label="Latitude" value={`${v.lat.toFixed(4)}\u00B0`} />
+          <DataField label="Longitude" value={`${v.lng.toFixed(4)}\u00B0`} />
+          <DataField label="Speed" value={`${v.speed.toFixed(1)} kn`} />
+          <DataField label="Course" value={`${v.course.toFixed(1)}\u00B0`} />
+          <DataField label="Heading" value={v.heading ? `${v.heading.toFixed(1)}\u00B0` : '—'} />
+          <DataField label="Destination" value={v.destination || '—'} />
+          <DataField label="Length" value={v.length ? `${v.length} m` : '—'} />
+          <DataField label="Width" value={v.width ? `${v.width} m` : '—'} />
+          <DataField label="Draught" value={v.draught ? `${v.draught.toFixed(1)} m` : '—'} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const NAV_STATUS_LABELS: Record<number, string> = {
+  0: 'Under way (engine)',
+  1: 'At anchor',
+  2: 'Not under command',
+  3: 'Restricted manoeuvrability',
+  4: 'Constrained by draught',
+  5: 'Moored',
+  6: 'Aground',
+  7: 'Engaged in fishing',
+  8: 'Under way (sailing)',
+  14: 'AIS-SART',
+  15: 'Not defined',
+}
+
+function navStatusLabel(status: number): string {
+  return NAV_STATUS_LABELS[status] ?? `Status ${status}`
+}
+
+function shipTypeLabel(type_: number): string {
+  if (type_ >= 70 && type_ <= 79) return 'Cargo'
+  if (type_ >= 80 && type_ <= 89) return 'Tanker'
+  if (type_ >= 60 && type_ <= 69) return 'Passenger'
+  if (type_ === 30) return 'Fishing'
+  if (type_ === 35) return 'Military'
+  if (type_ === 31 || type_ === 32) return 'Tug'
+  if (type_ >= 36 && type_ <= 37) return 'Sailing / Pleasure'
+  if (type_ >= 40 && type_ <= 49) return 'High-speed craft'
+  if (type_ === 50) return 'Pilot vessel'
+  if (type_ === 51) return 'Search & rescue'
+  if (type_ === 52) return 'Tug'
+  if (type_ === 53) return 'Port tender'
+  if (type_ === 55) return 'Law enforcement'
+  if (type_ === 58) return 'Medical transport'
+  if (type_ === 0) return 'Not specified'
+  return `Type ${type_}`
+}
+
+const DataField = memo(function DataField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span className="text-white/35 text-[11px] uppercase tracking-wide">{label}</span>
+      <p className="text-white/90 text-sm font-medium">{value}</p>
+    </div>
+  )
+})
