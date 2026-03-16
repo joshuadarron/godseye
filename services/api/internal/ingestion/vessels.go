@@ -37,6 +37,21 @@ type aisMetaData struct {
 	IMO        int    `json:"IMO"`
 }
 
+// aisstream.io wraps the actual data inside Message under a key matching the
+// MessageType, e.g. {"PositionReport": {...}}. These wrapper types handle that.
+type aisPositionReportWrapper struct {
+	PositionReport aisPositionReport `json:"PositionReport"`
+}
+type aisStdClassBWrapper struct {
+	StandardClassBCSPositionReport aisPositionReport `json:"StandardClassBCSPositionReport"`
+}
+type aisExtClassBWrapper struct {
+	ExtendedClassBCSPositionReport aisPositionReport `json:"ExtendedClassBCSPositionReport"`
+}
+type aisShipStaticDataWrapper struct {
+	ShipStaticData aisShipStaticData `json:"ShipStaticData"`
+}
+
 type aisPositionReport struct {
 	Cog              float64 `json:"Cog"`
 	Sog              float64 `json:"Sog"`
@@ -47,13 +62,13 @@ type aisPositionReport struct {
 }
 
 type aisShipStaticData struct {
-	Name        string  `json:"Name"`
-	CallSign    string  `json:"CallSign"`
-	Type        int     `json:"Type"`
-	IMONumber   int     `json:"ImoNumber"`
-	Destination string  `json:"Destination"`
-	Draught     float64 `json:"Draught"`
-	Dimension   aisDimension `json:"Dimension"`
+	Name                 string       `json:"Name"`
+	CallSign             string       `json:"CallSign"`
+	Type                 int          `json:"Type"`
+	IMONumber            int          `json:"ImoNumber"`
+	Destination          string       `json:"Destination"`
+	MaximumStaticDraught float64      `json:"MaximumStaticDraught"`
+	Dimension            aisDimension `json:"Dimension"`
 }
 
 type aisDimension struct {
@@ -217,28 +232,33 @@ func (w *VesselWorker) handleMessage(data []byte) {
 	}
 
 	switch msg.MessageType {
-	case "PositionReport", "StandardClassBCSPositionReport", "ExtendedClassBCSPositionReport":
-		var pr aisPositionReport
-		if err := json.Unmarshal(msg.Message, &pr); err != nil {
+	case "PositionReport":
+		var wrapper aisPositionReportWrapper
+		if err := json.Unmarshal(msg.Message, &wrapper); err != nil {
 			return
 		}
-		if pr.Latitude < -90 || pr.Latitude > 90 || pr.Longitude < -180 || pr.Longitude > 180 {
+		w.applyPositionReport(v, &wrapper.PositionReport)
+
+	case "StandardClassBCSPositionReport":
+		var wrapper aisStdClassBWrapper
+		if err := json.Unmarshal(msg.Message, &wrapper); err != nil {
 			return
 		}
-		v.Lat = pr.Latitude
-		v.Lng = pr.Longitude
-		v.Speed = pr.Sog
-		v.Course = pr.Cog
-		if pr.TrueHeading != 511 { // 511 = not available
-			v.Heading = float64(pr.TrueHeading)
+		w.applyPositionReport(v, &wrapper.StandardClassBCSPositionReport)
+
+	case "ExtendedClassBCSPositionReport":
+		var wrapper aisExtClassBWrapper
+		if err := json.Unmarshal(msg.Message, &wrapper); err != nil {
+			return
 		}
-		v.NavStatus = pr.NavigationalStatus
+		w.applyPositionReport(v, &wrapper.ExtendedClassBCSPositionReport)
 
 	case "ShipStaticData":
-		var sd aisShipStaticData
-		if err := json.Unmarshal(msg.Message, &sd); err != nil {
+		var wrapper aisShipStaticDataWrapper
+		if err := json.Unmarshal(msg.Message, &wrapper); err != nil {
 			return
 		}
+		sd := &wrapper.ShipStaticData
 		if sd.Name != "" {
 			v.Name = strings.TrimSpace(sd.Name)
 		}
@@ -252,10 +272,24 @@ func (w *VesselWorker) handleMessage(data []byte) {
 		if sd.Destination != "" {
 			v.Destination = strings.TrimSpace(sd.Destination)
 		}
-		v.Draught = sd.Draught
+		v.Draught = sd.MaximumStaticDraught
 		v.Length = float64(sd.Dimension.A + sd.Dimension.B)
 		v.Width = float64(sd.Dimension.C + sd.Dimension.D)
 	}
+}
+
+func (w *VesselWorker) applyPositionReport(v *vesselState, pr *aisPositionReport) {
+	if pr.Latitude < -90 || pr.Latitude > 90 || pr.Longitude < -180 || pr.Longitude > 180 {
+		return
+	}
+	v.Lat = pr.Latitude
+	v.Lng = pr.Longitude
+	v.Speed = pr.Sog
+	v.Course = pr.Cog
+	if pr.TrueHeading != 511 { // 511 = not available
+		v.Heading = float64(pr.TrueHeading)
+	}
+	v.NavStatus = pr.NavigationalStatus
 }
 
 func (w *VesselWorker) publishDeltas(ctx context.Context) {
@@ -274,7 +308,7 @@ func (w *VesselWorker) publishDeltas(ctx context.Context) {
 		return
 	}
 
-	slog.Debug("publishing vessels", "count", len(entities))
+	slog.Info("publishing vessels", "count", len(entities))
 
 	// Publish in batches of 2000.
 	const batchSize = 2000

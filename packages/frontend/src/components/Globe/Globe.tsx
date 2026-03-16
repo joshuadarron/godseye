@@ -12,6 +12,7 @@ import { setViewer } from '../../utils/viewerRef'
 // Import registrations to populate the registry.
 import '../../registries/flights'
 import '../../registries/satellites'
+import '../../registries/vessels'
 
 const token = import.meta.env.VITE_CESIUM_ION_TOKEN as string | undefined
 if (token) {
