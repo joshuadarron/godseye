@@ -109,15 +109,6 @@ func (w *EarthquakeWorker) tick(ctx context.Context) {
 		current[e.ID] = e
 	}
 
-	// Compute upserts: new or updated entities.
-	var upserts []models.EarthquakeEntity
-	for id, e := range current {
-		old, existed := w.prev[id]
-		if !existed || e.Magnitude != old.Magnitude || e.Status != old.Status || e.Alert != old.Alert {
-			upserts = append(upserts, e)
-		}
-	}
-
 	// Compute removals: entities in prev but not in current (expired from 24h window).
 	var removes []models.EarthquakeEntity
 	for id := range w.prev {
@@ -128,10 +119,14 @@ func (w *EarthquakeWorker) tick(ctx context.Context) {
 
 	w.prev = current
 
-	// Publish upserts.
-	if len(upserts) > 0 {
-		anyEntities := make([]any, len(upserts))
-		for i, e := range upserts {
+	// Always publish ALL entities on every tick. Unlike moving entities (flights,
+	// vessels), earthquakes are static — their fields rarely change. If we only
+	// published deltas, any WebSocket client connecting after the first tick would
+	// never receive the existing set (Redis pub/sub doesn't replay history).
+	// The dataset is small (~500 max), so republishing all every 5 minutes is fine.
+	if len(entities) > 0 {
+		anyEntities := make([]any, len(entities))
+		for i, e := range entities {
 			anyEntities[i] = e
 		}
 		if err := PublishDelta(ctx, w.rdb, earthquakeRedisChannel, "events", "upsert", anyEntities); err != nil {
