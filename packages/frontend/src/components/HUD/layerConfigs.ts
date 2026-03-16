@@ -11,6 +11,7 @@ export interface LayerConfig {
   label: string
   icon: ReactNode
   subtypes?: Record<string, string>
+  subtypeIcons?: Record<string, string>
 }
 
 const ICON_CLASS = 'w-7 h-7 shrink-0 fill-current'
@@ -67,6 +68,7 @@ export function buildLayerConfigs(): LayerConfig[] {
       label: reg.label,
       icon: reg.icon,
       subtypes: reg.subtypes,
+      subtypeIcons: reg.subtypeIcons,
     })
   }
 

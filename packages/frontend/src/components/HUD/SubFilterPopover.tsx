@@ -7,41 +7,59 @@ import {
 interface SubFilterPopoverProps {
   layerKey: string
   subtypes: Record<string, string>
+  subtypeIcons?: Record<string, string>
+  columnCount: number
 }
 
-export default memo(function SubFilterPopover({ layerKey, subtypes }: SubFilterPopoverProps) {
+export default memo(function SubFilterPopover({ layerKey, subtypes, subtypeIcons, columnCount }: SubFilterPopoverProps) {
   const sublayerMap = useLayerVisibilityStore((s) => s.sublayers[layerKey]) as SublayerMap | undefined
   const toggleSublayer = useLayerVisibilityStore((s) => s.toggleSublayer)
   const setAllSublayers = useLayerVisibilityStore((s) => s.setAllSublayers)
 
   const allOn = sublayerMap ? Object.values(sublayerMap).every(Boolean) : true
+  const entries = Object.entries(subtypes)
 
   return (
-    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/[0.08] shadow-2xl min-w-[200px] z-50">
-      <div className="flex flex-wrap gap-1.5">
+    <div className="rounded-xl bg-black/40 backdrop-blur-md border border-white/[0.08] shadow-2xl overflow-hidden">
+      <div
+        className="grid"
+        style={{ gridTemplateColumns: `repeat(${columnCount}, 5rem)` }}
+      >
         <button
           onClick={() => setAllSublayers(layerKey, !allOn)}
-          className={`px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer select-none transition-colors ${
+          className={`flex flex-col items-center justify-center w-20 h-20 text-xs font-medium cursor-pointer select-none transition-colors ${
             allOn
-              ? 'bg-white/15 text-white'
-              : 'bg-white/5 text-white/40 hover:text-white/60 hover:bg-white/10'
+              ? 'text-white bg-white/10'
+              : 'text-white/40 hover:text-white/60 hover:bg-white/5'
           }`}
         >
-          All
+          <svg className="w-7 h-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          <span className="mt-1">All</span>
         </button>
-        {Object.entries(subtypes).map(([subKey, subLabel]) => {
+        {entries.map(([subKey, subLabel]) => {
           const active = sublayerMap?.[subKey] ?? true
+          const iconUrl = subtypeIcons?.[subKey]
           return (
             <button
               key={subKey}
               onClick={() => toggleSublayer(layerKey, subKey)}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer select-none transition-colors ${
+              className={`flex flex-col items-center justify-center w-20 h-20 text-xs font-medium cursor-pointer select-none transition-colors ${
                 active
-                  ? 'bg-white/15 text-white'
-                  : 'bg-white/5 text-white/40 hover:text-white/60 hover:bg-white/10'
+                  ? 'text-white bg-white/10'
+                  : 'text-white/40 hover:text-white/60 hover:bg-white/5'
               }`}
             >
-              {subLabel}
+              {iconUrl ? (
+                <img src={iconUrl} alt={subLabel} className={`w-7 h-7 shrink-0 ${active ? 'opacity-100' : 'opacity-40'}`} />
+              ) : (
+                <div className="w-7 h-7" />
+              )}
+              <span className="mt-1">{subLabel}</span>
             </button>
           )
         })}
