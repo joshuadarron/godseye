@@ -45,6 +45,14 @@ function matchEntity(entity: Entity, layer: string, query: string): string | nul
     return null
   }
 
+  if (layer === 'events') {
+    const eq = entity as any
+    if (eq.place?.toLowerCase().includes(q)) return `M${eq.magnitude?.toFixed(1)} — ${eq.place}`
+    if (String(eq.magnitude).includes(q)) return `M${eq.magnitude?.toFixed(1)} — ${eq.place || eq.id}`
+    if (eq.id.toLowerCase().includes(q)) return `M${eq.magnitude?.toFixed(1)} — ${eq.place || eq.id}`
+    return null
+  }
+
   // Fallback for future layers
   if (entity.id.toLowerCase().includes(q)) return entity.id
   return null

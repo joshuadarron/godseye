@@ -75,7 +75,8 @@ func main() {
 	flightWorker := ingestion.NewFlightWorker(pool, rdb, cfg.OpenSkyClientID, cfg.OpenSkyClientSecret)
 	satelliteWorker := ingestion.NewSatelliteWorker(pool, rdb)
 	vesselWorker := ingestion.NewVesselWorker(pool, rdb, cfg.AISStreamAPIKey)
-	mgr := ingestion.NewManager(flightWorker, satelliteWorker, vesselWorker)
+	earthquakeWorker := ingestion.NewEarthquakeWorker(pool, rdb)
+	mgr := ingestion.NewManager(flightWorker, satelliteWorker, vesselWorker, earthquakeWorker)
 	go mgr.StartAll(ctx)
 
 	// Set up HTTP routes.

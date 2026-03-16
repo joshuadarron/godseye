@@ -6,6 +6,7 @@ import { entityRegistry } from '../stores/entityRegistry'
 import '../stores/flightStore'
 import '../stores/satelliteStore'
 import '../stores/vesselStore'
+import '../stores/earthquakeStore'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 

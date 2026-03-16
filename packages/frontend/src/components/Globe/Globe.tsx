@@ -13,6 +13,7 @@ import { setViewer } from '../../utils/viewerRef'
 import '../../registries/flights'
 import '../../registries/satellites'
 import '../../registries/vessels'
+import '../../registries/events'
 
 const token = import.meta.env.VITE_CESIUM_ION_TOKEN as string | undefined
 if (token) {

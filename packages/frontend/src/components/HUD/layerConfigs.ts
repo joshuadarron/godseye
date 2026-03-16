@@ -6,6 +6,7 @@ import { layerRegistry, type LayerRegistration } from '../../registries/layerReg
 import '../../registries/flights'
 import '../../registries/satellites'
 import '../../registries/vessels'
+import '../../registries/events'
 
 export interface LayerConfig {
   key: string
@@ -33,17 +34,6 @@ const PLACEHOLDER_LAYERS: LayerRegistration[] = [
       createElement('path', {
         d: 'M9 4h6v4H9z', fill: 'none', stroke: 'currentColor',
         strokeWidth: '1.5', strokeLinejoin: 'round',
-      }),
-    ),
-  } as any,
-  {
-    key: 'events',
-    label: 'Events',
-    icon: createElement('svg', { className: ICON_CLASS, viewBox: '0 0 24 24' },
-      createElement('path', {
-        d: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z',
-        fill: 'none', stroke: 'currentColor', strokeWidth: '1.5',
-        strokeLinecap: 'round', strokeLinejoin: 'round',
       }),
     ),
   } as any,

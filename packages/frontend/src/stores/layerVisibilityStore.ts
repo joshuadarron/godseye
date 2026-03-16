@@ -45,6 +45,14 @@ export const SATELLITE_SUBTYPES: Record<string, string> = {
   other: 'Other',
 }
 
+export const EVENT_SUBTYPES: Record<string, string> = {
+  major: 'Major (7+)',
+  strong: 'Strong (5-6.9)',
+  moderate: 'Moderate (4-4.9)',
+  light: 'Light (3-3.9)',
+  minor: 'Minor (<3)',
+}
+
 const defaultSublayers: Record<string, SublayerMap> = {
   flights: Object.fromEntries(
     Object.keys(FLIGHT_SUBTYPES).map((k) => [k, true]),
@@ -54,6 +62,9 @@ const defaultSublayers: Record<string, SublayerMap> = {
   ),
   vessels: Object.fromEntries(
     Object.keys(VESSEL_SUBTYPES).map((k) => [k, true]),
+  ),
+  events: Object.fromEntries(
+    Object.keys(EVENT_SUBTYPES).map((k) => [k, true]),
   ),
 }
 
@@ -154,6 +165,15 @@ export function classifyVessel(shipType: number): string {
   if (shipType === 31 || shipType === 32) return 'tug'
   if (shipType >= 36 && shipType <= 37) return 'pleasure'
   return 'other'
+}
+
+/** Classify an earthquake into a subtype key based on magnitude. */
+export function classifyEarthquake(magnitude: number): string {
+  if (magnitude >= 7) return 'major'
+  if (magnitude >= 5) return 'strong'
+  if (magnitude >= 4) return 'moderate'
+  if (magnitude >= 3) return 'light'
+  return 'minor'
 }
 
 /** Classify a satellite name into a subtype key. */

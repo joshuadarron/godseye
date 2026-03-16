@@ -55,3 +55,17 @@ export interface Vessel extends Entity {
   draught: number
   navStatus: number
 }
+
+/** Earthquake event from USGS data. */
+export interface Earthquake extends Entity {
+  magnitude: number
+  place: string
+  depth: number
+  time: string
+  url: string
+  alert: string
+  tsunami: number
+  significance: number
+  magType: string
+  status: string
+}
