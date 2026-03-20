@@ -18,7 +18,21 @@ Review what files are:
 - Untracked (new files)
 - Deleted
 
-### 2. Stage Files
+### 2. Run Quality Checks
+
+Before staging anything, run all quality checks and **abort the commit if any fail**:
+
+```bash
+pnpm lint && pnpm format && pnpm typecheck && pnpm test
+```
+
+If a check fails, fix the issue first — do not commit broken code. Re-run the checks after fixing until all pass. For Go changes, also run:
+
+```bash
+cd services/api && go vet ./... && go test ./...
+```
+
+### 3. Stage Files
 
 Add untracked and changed files individually:
 
@@ -28,7 +42,7 @@ git add <file1> <file2> ...
 
 **Do not use `git add -A` or `git add .`** — always add files explicitly to avoid committing sensitive files (.env, credentials, etc.) or unintended changes.
 
-### 3. Create Commit
+### 4. Create Commit
 
 Write an atomic commit with a tagged message:
 
@@ -123,9 +137,12 @@ feat: Add the new user authentication system with OAuth2 support and JWT tokens 
 # 1. Check status
 git status && git diff HEAD
 
-# 2. Stage specific files
+# 2. Run quality checks (abort if any fail)
+pnpm lint && pnpm format && pnpm typecheck && pnpm test
+
+# 3. Stage specific files
 git add path/to/file1 path/to/file2
 
-# 3. Commit with message
+# 4. Commit with message
 git commit -m "feat: Add new feature description."
 ```
