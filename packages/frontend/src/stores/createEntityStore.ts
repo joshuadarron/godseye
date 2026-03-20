@@ -12,9 +12,7 @@ export interface EntityStoreState<T extends Entity> {
 /**
  * Generic Zustand store factory for any entity layer.
  */
-export function createEntityStore<T extends Entity>(
-  _name: string,
-) {
+export function createEntityStore<T extends Entity>(_name: string) {
   return create<EntityStoreState<T>>((set, get) => ({
     entities: new Map(),
 

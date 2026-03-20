@@ -31,14 +31,17 @@ export default function VesselDetailPanel() {
     }
   }, [selected])
 
-  const onMoveDown = useCallback((e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest('button')) return
-    e.preventDefault()
-    mode.current = 'move'
-    startMouse.current = { x: e.clientX, y: e.clientY }
-    startPos.current = { ...pos }
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-  }, [pos])
+  const onMoveDown = useCallback(
+    (e: React.PointerEvent) => {
+      if ((e.target as HTMLElement).closest('button')) return
+      e.preventDefault()
+      mode.current = 'move'
+      startMouse.current = { x: e.clientX, y: e.clientY }
+      startPos.current = { ...pos }
+      ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    },
+    [pos],
+  )
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!mode.current) return
@@ -69,30 +72,30 @@ export default function VesselDetailPanel() {
 
   return (
     <div
-      className="fixed z-[100] flex flex-col rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl"
+      className="fixed z-[100] flex flex-col overflow-hidden rounded-xl border border-white/[0.08] shadow-2xl"
       style={{ left: pos.x, top: pos.y, width: DEFAULT_WIDTH }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
       <div
         onPointerDown={onMoveDown}
-        className="flex items-center justify-between px-4 py-2.5 bg-black/40 backdrop-blur-md cursor-grab active:cursor-grabbing select-none border-b border-white/[0.08] shrink-0"
+        className="flex shrink-0 cursor-grab items-center justify-between border-b border-white/[0.08] bg-black/40 px-4 py-2.5 backdrop-blur-md select-none active:cursor-grabbing"
       >
-        <div className="flex items-center gap-2 min-w-0">
-          {entityIcon && <img src={entityIcon} alt="" className="w-5 h-5 opacity-60" />}
-          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 truncate">
+        <div className="flex min-w-0 items-center gap-2">
+          {entityIcon && <img src={entityIcon} alt="" className="h-5 w-5 opacity-60" />}
+          <h2 className="truncate text-[11px] font-semibold tracking-widest text-white/40 uppercase">
             {v.name || v.id}
           </h2>
         </div>
         <Button
           onClick={clearSelected}
-          className="text-white/30 hover:text-white/60 text-lg leading-none cursor-pointer shrink-0 transition-colors"
+          className="shrink-0 cursor-pointer text-lg leading-none text-white/30 transition-colors hover:text-white/60"
         >
           &times;
         </Button>
       </div>
 
-      <div className="bg-black/40 backdrop-blur-md text-white px-4 py-3">
+      <div className="bg-black/40 px-4 py-3 text-white backdrop-blur-md">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           <DataField label="MMSI" value={v.id} />
           <DataField label="Name" value={v.name || '—'} />
@@ -155,8 +158,8 @@ function shipTypeLabel(type_: number): string {
 const DataField = memo(function DataField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <span className="text-white/35 text-[11px] uppercase tracking-wide">{label}</span>
-      <p className="text-white/90 text-sm font-medium">{value}</p>
+      <span className="text-[11px] tracking-wide text-white/35 uppercase">{label}</span>
+      <p className="text-sm font-medium text-white/90">{value}</p>
     </div>
   )
 })

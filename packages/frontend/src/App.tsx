@@ -5,7 +5,7 @@ import EntityDetailPanel from './components/HUD/EntityDetailPanel'
 
 function App() {
   return (
-    <div className="relative w-full h-full bg-black">
+    <div className="relative h-full w-full bg-black">
       <Globe />
       <HUDToolbar />
       <EntityTooltip />

@@ -26,19 +26,24 @@ const DEG2RAD = Math.PI / 180
 const RAD2DEG = 180 / Math.PI
 
 function greatCirclePoints(
-  lat1: number, lng1: number,
-  lat2: number, lng2: number,
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
   count: number,
 ): { lat: number; lng: number }[] {
-  const φ1 = lat1 * DEG2RAD, λ1 = lng1 * DEG2RAD
-  const φ2 = lat2 * DEG2RAD, λ2 = lng2 * DEG2RAD
+  const φ1 = lat1 * DEG2RAD,
+    λ1 = lng1 * DEG2RAD
+  const φ2 = lat2 * DEG2RAD,
+    λ2 = lng2 * DEG2RAD
 
-  const d = 2 * Math.asin(
-    Math.sqrt(
-      Math.sin((φ2 - φ1) / 2) ** 2 +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin((λ2 - λ1) / 2) ** 2,
-    ),
-  )
+  const d =
+    2 *
+    Math.asin(
+      Math.sqrt(
+        Math.sin((φ2 - φ1) / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin((λ2 - λ1) / 2) ** 2,
+      ),
+    )
 
   if (d < 1e-10) return [{ lat: lat1, lng: lng1 }]
 
@@ -71,10 +76,7 @@ function splitAtAntimeridian(positions: Cartesian3[], lngs: number[]): Cartesian
   return segments
 }
 
-function buildArcPrimitives(
-  route: FlightRoute,
-  flight: Flight,
-): PolylineCollection {
+function buildArcPrimitives(route: FlightRoute, flight: Flight): PolylineCollection {
   ensureAnimatedDashMaterial()
 
   const dep = route.departure
@@ -137,10 +139,22 @@ export default function FlightTrajectoryOverlay() {
     const viewer = rawViewer as CesiumViewer
 
     // Cleanup previous
-    if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = 0 }
-    if (rebuildTimerRef.current) { clearInterval(rebuildTimerRef.current); rebuildTimerRef.current = null }
-    if (polyCollRef.current) { viewer.scene.primitives.remove(polyCollRef.current); polyCollRef.current = null }
-    if (pointCollRef.current) { viewer.scene.primitives.remove(pointCollRef.current); pointCollRef.current = null }
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current)
+      animFrameRef.current = 0
+    }
+    if (rebuildTimerRef.current) {
+      clearInterval(rebuildTimerRef.current)
+      rebuildTimerRef.current = null
+    }
+    if (polyCollRef.current) {
+      viewer.scene.primitives.remove(polyCollRef.current)
+      polyCollRef.current = null
+    }
+    if (pointCollRef.current) {
+      viewer.scene.primitives.remove(pointCollRef.current)
+      pointCollRef.current = null
+    }
 
     if (!selected || selected.layer !== 'flights') return
 
@@ -157,11 +171,17 @@ export default function FlightTrajectoryOverlay() {
       const pointColl = new PointPrimitiveCollection()
       pointColl.add({
         position: Cartesian3.fromDegrees(route.departure.lng, route.departure.lat, 0),
-        pixelSize: 6, color: AIRPORT_COLOR, outlineColor: Color.WHITE, outlineWidth: 1,
+        pixelSize: 6,
+        color: AIRPORT_COLOR,
+        outlineColor: Color.WHITE,
+        outlineWidth: 1,
       })
       pointColl.add({
         position: Cartesian3.fromDegrees(route.arrival.lng, route.arrival.lat, 0),
-        pixelSize: 6, color: AIRPORT_COLOR, outlineColor: Color.WHITE, outlineWidth: 1,
+        pixelSize: 6,
+        color: AIRPORT_COLOR,
+        outlineColor: Color.WHITE,
+        outlineWidth: 1,
       })
       viewer.scene.primitives.add(pointColl)
       pointCollRef.current = pointColl
@@ -189,7 +209,9 @@ export default function FlightTrajectoryOverlay() {
       animFrameRef.current = requestAnimationFrame(animate)
     })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [rawViewer, selected])
 
   // Cleanup on unmount

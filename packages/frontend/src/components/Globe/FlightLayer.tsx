@@ -11,7 +11,7 @@ export default function FlightLayer() {
   const entities = useMemo(() => {
     const map = new Map<string, ModelEntity>()
     flights.forEach((flight, id) => {
-      const alt = flight.onGround ? 0 : (flight.altitude || 0)
+      const alt = flight.onGround ? 0 : flight.altitude || 0
       map.set(id, {
         id,
         lon: flight.lng,

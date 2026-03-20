@@ -4,9 +4,5 @@ import tailwindcss from '@tailwindcss/vite'
 import cesium from 'vite-plugin-cesium'
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    cesium(),
-  ],
+  plugins: [react(), tailwindcss(), cesium()],
 })

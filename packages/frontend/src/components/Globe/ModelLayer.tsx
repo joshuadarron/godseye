@@ -161,7 +161,9 @@ export default function ModelLayer({
           // Update position in-place.
           Cartesian3.fromDegrees(entity.lon, entity.lat, entity.alt, undefined, scratchPosition)
           existing.position = scratchPosition
-          existing.rotation = disableRotation ? 0 : -CesiumMath.toRadians((entity.heading || 0) + headingOffset)
+          existing.rotation = disableRotation
+            ? 0
+            : -CesiumMath.toRadians((entity.heading || 0) + headingOffset)
           // Only update selection styling if selection state changed for this entity.
           if (id === selectedId || id === prevSelectedRef.current) {
             existing.scale = isSelected ? iconScale * 2 : iconScale
@@ -174,7 +176,9 @@ export default function ModelLayer({
             scale: isSelected ? iconScale * 2 : iconScale,
             scaleByDistance: new NearFarScalar(500_000, 3.0, 20_000_000, 0.3),
             color: isSelected ? Color.CYAN : Color.WHITE,
-            rotation: disableRotation ? 0 : -CesiumMath.toRadians((entity.heading || 0) + headingOffset),
+            rotation: disableRotation
+              ? 0
+              : -CesiumMath.toRadians((entity.heading || 0) + headingOffset),
             verticalOrigin: VerticalOrigin.CENTER,
             alignedAxis: disableRotation ? Cartesian3.ZERO : Cartesian3.UNIT_Z,
             id: layerName ? { layer: layerName, entityId: entity.id } : undefined,
@@ -233,7 +237,19 @@ export default function ModelLayer({
     }
 
     prevSelectedRef.current = selectedId
-  }, [entities, scene, iconUrl, iconScale, headingOffset, fallbackColor, fallbackPixelSize, selectedId, disableRotation, layerName, iconAvailable])
+  }, [
+    entities,
+    scene,
+    iconUrl,
+    iconScale,
+    headingOffset,
+    fallbackColor,
+    fallbackPixelSize,
+    selectedId,
+    disableRotation,
+    layerName,
+    iconAvailable,
+  ])
 
   return null
 }

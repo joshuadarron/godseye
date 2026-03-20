@@ -77,35 +77,35 @@ Open **http://localhost:5173** — you should see a 3D globe with live flights a
 
 ## Data Layers
 
-| Layer | Source | Interval | Status |
-|---|---|---|---|
-| Flights | OpenSky Network (ADS-B) | 1 s | **Live** |
-| Satellites | CelesTrak TLE + SGP4 | 1 s (computed) | **Live** |
-| Vessels | AISHub, MarineTraffic | 1-5 s | Planned |
-| Trains | OpenRailwayMap, Transitland, GTFS | 5-10 s | Planned |
-| Earthquakes | USGS Earthquake API | Real-time | Planned |
-| Weather Alerts | OpenWeatherMap | Real-time | Planned |
-| Armed Conflicts | ACLED | 15 min | Planned |
-| News / Geopolitical | GDELT Project | 15 min | Planned |
-| Humanitarian | ReliefWeb API | 15 min | Planned |
-| Sports / Concerts | Ticketmaster, PredictHQ | 15 min | Planned |
+| Layer               | Source                            | Interval       | Status   |
+| ------------------- | --------------------------------- | -------------- | -------- |
+| Flights             | OpenSky Network (ADS-B)           | 1 s            | **Live** |
+| Satellites          | CelesTrak TLE + SGP4              | 1 s (computed) | **Live** |
+| Vessels             | AISHub, MarineTraffic             | 1-5 s          | Planned  |
+| Trains              | OpenRailwayMap, Transitland, GTFS | 5-10 s         | Planned  |
+| Earthquakes         | USGS Earthquake API               | Real-time      | Planned  |
+| Weather Alerts      | OpenWeatherMap                    | Real-time      | Planned  |
+| Armed Conflicts     | ACLED                             | 15 min         | Planned  |
+| News / Geopolitical | GDELT Project                     | 15 min         | Planned  |
+| Humanitarian        | ReliefWeb API                     | 15 min         | Planned  |
+| Sports / Concerts   | Ticketmaster, PredictHQ           | 15 min         | Planned  |
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Backend | Go |
-| Database | TimescaleDB (PostgreSQL) + PostGIS |
-| Cache / Pub-Sub | Redis |
-| WebSockets | nhooyr.io/websocket |
-| Frontend | React 18 + Vite + TypeScript |
-| Package Manager | pnpm |
-| Globe | CesiumJS (via resium) |
-| State | Zustand |
-| Styling | Tailwind CSS |
-| Infrastructure | Docker Compose |
+| Layer           | Technology                         |
+| --------------- | ---------------------------------- |
+| Backend         | Go                                 |
+| Database        | TimescaleDB (PostgreSQL) + PostGIS |
+| Cache / Pub-Sub | Redis                              |
+| WebSockets      | nhooyr.io/websocket                |
+| Frontend        | React 18 + Vite + TypeScript       |
+| Package Manager | pnpm                               |
+| Globe           | CesiumJS (via resium)              |
+| State           | Zustand                            |
+| Styling         | Tailwind CSS                       |
+| Infrastructure  | Docker Compose                     |
 
 ---
 

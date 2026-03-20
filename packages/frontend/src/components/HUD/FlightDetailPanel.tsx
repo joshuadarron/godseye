@@ -17,8 +17,8 @@ export default function FlightDetailPanel() {
   const clearSelected = useSelectedEntityStore((s) => s.clearSelected)
 
   // Align with the search results panel: toolbar py-3 (12px) + search bar (~44px) + mt-3 (12px) = 68px.
-const PANEL_TOP = 119
-const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_TOP })
+  const PANEL_TOP = 119
+  const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_TOP })
 
   const [pos, setPos] = useState(defaultPos)
   const [initialized, setInitialized] = useState(false)
@@ -36,14 +36,17 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
     }
   }, [selected])
 
-  const onMoveDown = useCallback((e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest('button')) return
-    e.preventDefault()
-    mode.current = 'move'
-    startMouse.current = { x: e.clientX, y: e.clientY }
-    startPos.current = { ...pos }
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-  }, [pos])
+  const onMoveDown = useCallback(
+    (e: React.PointerEvent) => {
+      if ((e.target as HTMLElement).closest('button')) return
+      e.preventDefault()
+      mode.current = 'move'
+      startMouse.current = { x: e.clientX, y: e.clientY }
+      startPos.current = { ...pos }
+      ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    },
+    [pos],
+  )
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!mode.current) return
@@ -60,7 +63,11 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
   const [aircraft, setAircraft] = useState<AircraftMeta | null>(null)
 
   useEffect(() => {
-    if (!selected || selected.layer !== 'flights') { setRoute(null); setAircraft(null); return }
+    if (!selected || selected.layer !== 'flights') {
+      setRoute(null)
+      setAircraft(null)
+      return
+    }
     const flight = useFlightStore.getState().entities.get(selected.entityId)
     let cancelled = false
 
@@ -76,7 +83,9 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
       if (!cancelled) setAircraft(a)
     })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [selected])
 
   const isOpen = !!(selected && selected.layer === 'flights' && initialized)
@@ -98,53 +107,71 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
 
   return (
     <div
-      className="fixed z-[100] flex flex-col rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl"
+      className="fixed z-[100] flex flex-col overflow-hidden rounded-xl border border-white/[0.08] shadow-2xl"
       style={{ left: pos.x, top: pos.y, width: DEFAULT_WIDTH }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
       <div
         onPointerDown={onMoveDown}
-        className="flex items-center justify-between px-4 py-2.5 bg-black/40 backdrop-blur-md cursor-grab active:cursor-grabbing select-none border-b border-white/[0.08] shrink-0"
+        className="flex shrink-0 cursor-grab items-center justify-between border-b border-white/[0.08] bg-black/40 px-4 py-2.5 backdrop-blur-md select-none active:cursor-grabbing"
       >
-        <div className="flex items-center gap-2 min-w-0">
-          {entityIcon && <img src={entityIcon} alt="" className="w-5 h-5 opacity-60" />}
-          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 truncate">
+        <div className="flex min-w-0 items-center gap-2">
+          {entityIcon && <img src={entityIcon} alt="" className="h-5 w-5 opacity-60" />}
+          <h2 className="truncate text-[11px] font-semibold tracking-widest text-white/40 uppercase">
             {f.callsign || f.id}
           </h2>
         </div>
         <Button
           onClick={clearSelected}
-          className="text-white/30 hover:text-white/60 text-lg leading-none cursor-pointer shrink-0 transition-colors"
+          className="shrink-0 cursor-pointer text-lg leading-none text-white/30 transition-colors hover:text-white/60"
         >
           &times;
         </Button>
       </div>
 
-      <div className="bg-black/40 backdrop-blur-md text-white px-4 py-3">
+      <div className="bg-black/40 px-4 py-3 text-white backdrop-blur-md">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           <DataField label="ICAO" value={f.id} />
           <DataField label="Callsign" value={f.callsign || '—'} />
           <DataField label="Registration" value={aircraft?.reg || '—'} />
-          <DataField label="Type" value={aircraft ? `${aircraft.type}${aircraft.model ? ` — ${aircraft.model}` : ''}` : '—'} />
+          <DataField
+            label="Type"
+            value={
+              aircraft ? `${aircraft.type}${aircraft.model ? ` — ${aircraft.model}` : ''}` : '—'
+            }
+          />
           <DataField label="Operator" value={aircraft?.op || '—'} />
           <DataField label="Origin" value={f.originCountry || '—'} />
           <DataField label="Source" value={f.source} />
           <DataField label="Category" value={categoryLabel(f.category)} />
           <DataField label="Latitude" value={`${f.lat.toFixed(4)}\u00B0`} />
           <DataField label="Longitude" value={`${f.lng.toFixed(4)}\u00B0`} />
-          <DataField label="Baro Alt." value={f.onGround ? 'Ground' : `${Math.round(f.altitude * 3.281).toLocaleString()} ft`} />
-          <DataField label="Geo Alt." value={f.onGround ? 'Ground' : `${Math.round(f.geoAltitude * 3.281).toLocaleString()} ft`} />
+          <DataField
+            label="Baro Alt."
+            value={f.onGround ? 'Ground' : `${Math.round(f.altitude * 3.281).toLocaleString()} ft`}
+          />
+          <DataField
+            label="Geo Alt."
+            value={
+              f.onGround ? 'Ground' : `${Math.round(f.geoAltitude * 3.281).toLocaleString()} ft`
+            }
+          />
           <DataField label="Speed" value={`${f.velocity.toFixed(1)} m/s`} />
           <DataField label="Heading" value={`${f.heading.toFixed(1)}\u00B0`} />
           <DataField label="Vert. Rate" value={formatVerticalRate(f.verticalRate)} />
           <DataField label="Squawk" value={f.squawk || '—'} />
           <DataField label="Status" value={f.onGround ? 'On Ground' : 'Airborne'} />
-          <DataField label="Departure" value={route ? `${route.departure.name} (${route.departure.icao})` : '—'} />
-          <DataField label="Arrival" value={route ? `${route.arrival.name} (${route.arrival.icao})` : '—'} />
+          <DataField
+            label="Departure"
+            value={route ? `${route.departure.name} (${route.departure.icao})` : '—'}
+          />
+          <DataField
+            label="Arrival"
+            value={route ? `${route.arrival.name} (${route.arrival.icao})` : '—'}
+          />
         </div>
       </div>
-
     </div>
   )
 }
@@ -180,8 +207,8 @@ function formatVerticalRate(rate: number): string {
 const DataField = memo(function DataField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <span className="text-white/35 text-[11px] uppercase tracking-wide">{label}</span>
-      <p className="text-white/90 text-sm font-medium">{value}</p>
+      <span className="text-[11px] tracking-wide text-white/35 uppercase">{label}</span>
+      <p className="text-sm font-medium text-white/90">{value}</p>
     </div>
   )
 })

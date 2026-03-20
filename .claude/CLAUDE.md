@@ -46,6 +46,7 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 ## Tech Stack
 
 ### Backend
+
 - **Language**: Go
 - **Database**: TimescaleDB (PostgreSQL + time-series hypertables) with PostGIS for geospatial queries
 - **Cache / Pub-Sub**: Redis — ingestion workers publish here; WebSocket server subscribes and fans out to clients
@@ -53,6 +54,7 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 - **Pattern**: Each data source has its own goroutine-based ingestion worker with backoff/retry logic
 
 ### Frontend
+
 - **Framework**: React 18
 - **Build tool**: Vite
 - **Package manager**: pnpm
@@ -62,6 +64,7 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 - **Transport**: Native WebSocket client with delta reconciliation
 
 ### Infrastructure
+
 - Docker Compose at project root for local dev (TimescaleDB + Redis)
 
 ---
@@ -69,21 +72,25 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 ## Data Sources & APIs
 
 ### Flights
+
 - **Primary**: OpenSky Network — free, open ADS-B, REST + WebSocket
 - **Secondary**: ADS-B Exchange — unfiltered (includes military), community-fed
 
 ### Vessels / Maritime
+
 - **Primary**: AISHub — free AIS aggregator (requires AIS feed share or key request)
 - **Secondary**: MarineTraffic or VesselFinder free developer tiers
 - Includes: cargo, military, emergency, personal, tankers, cruise
 
 ### Trains
+
 - **Global rail infrastructure**: OpenRailwayMap (OSM-based, free)
 - **Real-time (where available)**: Transitland (GTFS aggregator, free), Deutsche Bahn Open API, UK National Rail Darwin
 - **Fallback**: Interpolate positions from static GTFS schedule data where live GPS is unavailable
 - ⚠️ Live train GPS is sparse outside Europe/UK/Japan — design the layer accordingly
 
 ### Satellites
+
 - **Primary**: [CelesTrak](https://celestrak.org/) — free TLE (Two-Line Element) data for 20,000+ objects including ISS, Starlink, weather sats, military, debris
 - **Secondary**: [Space-Track.org](https://www.space-track.org/) — official US Space Force catalog, free with registration, most authoritative source
 - **Propagation**: Use **satellite.js** (JS) or **sgp4** (Go) to compute real-time orbital positions from TLE data — no live position API needed, positions are calculated client or server-side
@@ -91,14 +98,15 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 - ⚠️ TLE data goes stale — refresh from CelesTrak every 24 hours minimum; Starlink TLEs change frequently and need more frequent updates
 
 ### Active Events
-| Category | Source |
-|---|---|
-| Armed conflicts | ACLED (free for research) |
-| News / geopolitical events | GDELT Project (free, 15-min updates) |
-| Humanitarian crises | ReliefWeb API (UN-backed, free) |
-| Earthquakes | USGS Earthquake API (real-time, free) |
-| Severe weather | OpenWeatherMap Alerts (free tier) |
-| Sports & concerts | Ticketmaster Discovery API + PredictHQ (free tiers) |
+
+| Category                   | Source                                              |
+| -------------------------- | --------------------------------------------------- |
+| Armed conflicts            | ACLED (free for research)                           |
+| News / geopolitical events | GDELT Project (free, 15-min updates)                |
+| Humanitarian crises        | ReliefWeb API (UN-backed, free)                     |
+| Earthquakes                | USGS Earthquake API (real-time, free)               |
+| Severe weather             | OpenWeatherMap Alerts (free tier)                   |
+| Sports & concerts          | Ticketmaster Discovery API + PredictHQ (free tiers) |
 
 ---
 
@@ -127,15 +135,15 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 
 ## Update Cadence
 
-| Layer | Update Interval |
-|---|---|
-| Flights | 1 second |
-| Satellites | 1 second (computed via SGP4 propagation) |
-| Vessels | 1–5 seconds |
-| Trains | 5–10 seconds |
-| Earthquakes / Weather | Real-time as events occur |
-| Conflicts / GDELT | 15 minutes |
-| Sports / Concerts | 15 minutes |
+| Layer                 | Update Interval                          |
+| --------------------- | ---------------------------------------- |
+| Flights               | 1 second                                 |
+| Satellites            | 1 second (computed via SGP4 propagation) |
+| Vessels               | 1–5 seconds                              |
+| Trains                | 5–10 seconds                             |
+| Earthquakes / Weather | Real-time as events occur                |
+| Conflicts / GDELT     | 15 minutes                               |
+| Sports / Concerts     | 15 minutes                               |
 
 ---
 
@@ -145,7 +153,7 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 - TimescaleDB hypertables partitioned by `recorded_at` timestamp — always include time bounds in queries
 - Redis keys follow the pattern `layer:{source}:{entity_id}` (e.g., `flight:opensky:abc123`)
 - WebSocket messages are JSON delta payloads: `{ layer, action: "upsert"|"remove", entities: [...] }`
-- Frontend stores only hold the *current snapshot* of each layer — historical data lives in the DB only
+- Frontend stores only hold the _current snapshot_ of each layer — historical data lives in the DB only
 - Ingestion workers must implement exponential backoff and respect API rate limits — never hammer a free API
 
 ---

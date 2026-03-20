@@ -1,5 +1,14 @@
 import { useEffect, useMemo } from 'react'
-import { Ion, Color, UrlTemplateImageryProvider, Viewer as CesiumViewer, ScreenSpaceEventHandler, ScreenSpaceEventType, defined, Cartesian2 } from 'cesium'
+import {
+  Ion,
+  Color,
+  UrlTemplateImageryProvider,
+  Viewer as CesiumViewer,
+  ScreenSpaceEventHandler,
+  ScreenSpaceEventType,
+  defined,
+  Cartesian2,
+} from 'cesium'
 import { Viewer, Globe as CesiumGlobe, Scene, SkyAtmosphere, useCesium } from 'resium'
 import GenericEntityLayer from './GenericEntityLayer'
 import { layerRegistry } from '../../registries/layerRegistry'
@@ -190,11 +199,7 @@ export default function Globe() {
     >
       <Scene backgroundColor={Color.BLACK} />
       <SkyAtmosphere />
-      <CesiumGlobe
-        showGroundAtmosphere
-        enableLighting
-        dynamicAtmosphereLightingFromSun
-      />
+      <CesiumGlobe showGroundAtmosphere enableLighting dynamicAtmosphereLightingFromSun />
       <ViewerInit />
       <ViewportBoundsReporter />
       <PickHandler />

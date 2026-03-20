@@ -29,7 +29,7 @@ export default function HUDToolbar() {
   }, [setOpenSubFilter])
 
   return (
-    <div className="fixed top-0 inset-x-0 z-50 pointer-events-none">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-50">
       <div className="flex items-start gap-4 px-4 py-3">
         {/* Search — left */}
         <div className="pointer-events-auto flex flex-col">
@@ -38,13 +38,13 @@ export default function HUDToolbar() {
         </div>
 
         {/* Layer tabs — center */}
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center">
           <div
             className="pointer-events-auto"
             onMouseEnter={handleEnter}
             onMouseLeave={handleLeave}
           >
-            <div className="flex items-center rounded-xl bg-black/40 backdrop-blur-md border border-white/[0.08]">
+            <div className="flex items-center rounded-xl border border-white/[0.08] bg-black/40 backdrop-blur-md">
               {LAYERS.map((layer) => (
                 <LayerTab key={layer.key} layer={layer} />
               ))}

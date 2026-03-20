@@ -17,7 +17,14 @@ registerLayer({
   label: 'Satellites',
   icon: (
     <svg className={ICON_CLASS} viewBox="0 0 24 24">
-      <path d="M6.6 11.4 1 16l4-1-1 4 4.6-5.6M2 2l2.5 2.5M7 3l-1 2M3 7l2-1M17.4 12.6 23 8l-4 1 1-4-4.6 5.6M22 22l-2.5-2.5M17 21l1-2M21 17l-2 1" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M6.6 11.4 1 16l4-1-1 4 4.6-5.6M2 2l2.5 2.5M7 3l-1 2M3 7l2-1M17.4 12.6 23 8l-4 1 1-4-4.6 5.6M22 22l-2.5-2.5M17 21l1-2M21 17l-2 1"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   ),

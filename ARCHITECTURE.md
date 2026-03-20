@@ -313,4 +313,4 @@ graph LR
 
 ---
 
-*Dashed outlines indicate planned components not yet implemented.*
+_Dashed outlines indicate planned components not yet implemented._

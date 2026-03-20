@@ -25,7 +25,7 @@ registerLayer({
       id: f.id,
       lon: f.lng,
       lat: f.lat,
-      alt: f.onGround ? 0 : (f.altitude || 0),
+      alt: f.onGround ? 0 : f.altitude || 0,
       heading: f.heading || 0,
     }
   },

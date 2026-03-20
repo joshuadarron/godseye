@@ -1,8 +1,5 @@
 import { memo } from 'react'
-import {
-  useLayerVisibilityStore,
-  type SublayerMap,
-} from '../../stores/layerVisibilityStore'
+import { useLayerVisibilityStore, type SublayerMap } from '../../stores/layerVisibilityStore'
 
 interface SubFilterPopoverProps {
   layerKey: string
@@ -11,8 +8,15 @@ interface SubFilterPopoverProps {
   columnCount: number
 }
 
-export default memo(function SubFilterPopover({ layerKey, subtypes, subtypeIcons, columnCount }: SubFilterPopoverProps) {
-  const sublayerMap = useLayerVisibilityStore((s) => s.sublayers[layerKey]) as SublayerMap | undefined
+export default memo(function SubFilterPopover({
+  layerKey,
+  subtypes,
+  subtypeIcons,
+  columnCount,
+}: SubFilterPopoverProps) {
+  const sublayerMap = useLayerVisibilityStore((s) => s.sublayers[layerKey]) as
+    | SublayerMap
+    | undefined
   const toggleSublayer = useLayerVisibilityStore((s) => s.toggleSublayer)
   const setAllSublayers = useLayerVisibilityStore((s) => s.setAllSublayers)
 
@@ -20,20 +24,23 @@ export default memo(function SubFilterPopover({ layerKey, subtypes, subtypeIcons
   const entries = Object.entries(subtypes)
 
   return (
-    <div className="rounded-xl bg-black/40 backdrop-blur-md border border-white/[0.08] shadow-2xl overflow-hidden">
-      <div
-        className="grid"
-        style={{ gridTemplateColumns: `repeat(${columnCount}, 5rem)` }}
-      >
+    <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 shadow-2xl backdrop-blur-md">
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${columnCount}, 5rem)` }}>
         <button
           onClick={() => setAllSublayers(layerKey, !allOn)}
-          className={`flex flex-col items-center justify-center w-20 h-20 text-xs font-medium cursor-pointer select-none transition-colors ${
-            allOn
-              ? 'text-white bg-white/10'
-              : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+          className={`flex h-20 w-20 cursor-pointer flex-col items-center justify-center text-xs font-medium transition-colors select-none ${
+            allOn ? 'bg-white/10 text-white' : 'text-white/40 hover:bg-white/5 hover:text-white/60'
           }`}
         >
-          <svg className="w-7 h-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            className="h-7 w-7 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <rect x="3" y="3" width="7" height="7" rx="1" />
             <rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -48,16 +55,20 @@ export default memo(function SubFilterPopover({ layerKey, subtypes, subtypeIcons
             <button
               key={subKey}
               onClick={() => toggleSublayer(layerKey, subKey)}
-              className={`flex flex-col items-center justify-center w-20 h-20 text-xs font-medium cursor-pointer select-none transition-colors ${
+              className={`flex h-20 w-20 cursor-pointer flex-col items-center justify-center text-xs font-medium transition-colors select-none ${
                 active
-                  ? 'text-white bg-white/10'
-                  : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/40 hover:bg-white/5 hover:text-white/60'
               }`}
             >
               {iconUrl ? (
-                <img src={iconUrl} alt={subLabel} className={`w-7 h-7 shrink-0 ${active ? 'opacity-100' : 'opacity-40'}`} />
+                <img
+                  src={iconUrl}
+                  alt={subLabel}
+                  className={`h-7 w-7 shrink-0 ${active ? 'opacity-100' : 'opacity-40'}`}
+                />
               ) : (
-                <div className="w-7 h-7" />
+                <div className="h-7 w-7" />
               )}
               <span className="mt-1">{subLabel}</span>
             </button>

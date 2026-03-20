@@ -13,6 +13,7 @@ git status && git diff HEAD && git status --porcelain
 ```
 
 Review what files are:
+
 - Modified (staged and unstaged)
 - Untracked (new files)
 - Deleted
@@ -55,20 +56,21 @@ git commit -m "<tag>: <Summary of changes.>"
 
 ### Tags
 
-| Tag | Use When |
-|-----|----------|
-| `feat` | Adding new functionality |
-| `fix` | Fixing a bug |
-| `docs` | Documentation only changes |
-| `style` | Formatting, whitespace, no code change |
+| Tag        | Use When                                   |
+| ---------- | ------------------------------------------ |
+| `feat`     | Adding new functionality                   |
+| `fix`      | Fixing a bug                               |
+| `docs`     | Documentation only changes                 |
+| `style`    | Formatting, whitespace, no code change     |
 | `refactor` | Code restructuring without behavior change |
-| `test` | Adding or updating tests |
-| `chore` | Build scripts, dependencies, tooling |
-| `perf` | Performance improvements |
+| `test`     | Adding or updating tests                   |
+| `chore`    | Build scripts, dependencies, tooling       |
+| `perf`     | Performance improvements                   |
 
 ### Examples
 
 **Good:**
+
 ```
 feat: Add captive portal detection for Android devices.
 fix: Resolve null pointer in chat message handler.
@@ -78,6 +80,7 @@ chore: Update Go dependencies to latest versions.
 ```
 
 **Bad:**
+
 ```
 updated stuff                    # Vague, no tag, no punctuation
 feat: added new feature          # Lowercase, missing period

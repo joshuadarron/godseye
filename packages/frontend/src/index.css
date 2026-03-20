@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Ensure full-height layout chain for CesiumJS */
 html,

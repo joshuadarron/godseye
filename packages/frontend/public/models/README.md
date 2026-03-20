@@ -4,12 +4,12 @@ Place PNG icon files here for entity rendering on the globe. Icons are rendered 
 
 ## Expected Files
 
-| Filename | Entity Type |
-|----------|-------------|
-| `aircraft.png` | Flights |
-| `satellite.png` | Satellites |
-| `vessel.png` | Ships |
-| `train.png` | Trains |
+| Filename        | Entity Type |
+| --------------- | ----------- |
+| `aircraft.png`  | Flights     |
+| `satellite.png` | Satellites  |
+| `vessel.png`    | Ships       |
+| `train.png`     | Trains      |
 
 ## Requirements
 

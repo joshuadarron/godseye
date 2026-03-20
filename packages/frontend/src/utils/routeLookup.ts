@@ -76,9 +76,12 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
  * two endpoints. Returns the absolute distance in km.
  */
 function crossTrackDistance(
-  pLat: number, pLng: number,
-  aLat: number, aLng: number,
-  bLat: number, bLng: number,
+  pLat: number,
+  pLng: number,
+  aLat: number,
+  aLng: number,
+  bLat: number,
+  bLng: number,
 ): number {
   const dAP = haversine(aLat, aLng, pLat, pLng) / 6371
   const bearingAP = bearing(aLat, aLng, pLat, pLng)

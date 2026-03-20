@@ -11,7 +11,8 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const AIRPORTS_URL = 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat'
+const AIRPORTS_URL =
+  'https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat'
 const ROUTES_URL = 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat'
 
 const OUT_DIR = resolve(__dirname, '../public/data')

@@ -60,7 +60,9 @@ export default function SatelliteFootprintOverlay() {
     if (!selected || selected.layer !== 'satellites') return
 
     // Read TLE data imperatively — we only need it once per selection, not on every store update.
-    const sat = useSatelliteStore.getState().entities.get(selected.entityId) as Satellite | undefined
+    const sat = useSatelliteStore.getState().entities.get(selected.entityId) as
+      | Satellite
+      | undefined
     if (!sat?.tle1 || !sat?.tle2) return
 
     const altMeters = (sat.altitude || 0) * 1000
@@ -75,18 +77,20 @@ export default function SatelliteFootprintOverlay() {
       const midPos = Cartesian3.fromDegrees(lng, lat, alt / 2)
 
       const cone = new Primitive({
-        geometryInstances: [new GeometryInstance({
-          geometry: new CylinderGeometry({
-            length: alt,
-            topRadius: 0.0,
-            bottomRadius: footprintRadius,
-            slices: 64,
+        geometryInstances: [
+          new GeometryInstance({
+            geometry: new CylinderGeometry({
+              length: alt,
+              topRadius: 0.0,
+              bottomRadius: footprintRadius,
+              slices: 64,
+            }),
+            modelMatrix: Transforms.eastNorthUpToFixedFrame(midPos),
+            attributes: {
+              color: ColorGeometryInstanceAttribute.fromColor(CONE_COLOR),
+            },
           }),
-          modelMatrix: Transforms.eastNorthUpToFixedFrame(midPos),
-          attributes: {
-            color: ColorGeometryInstanceAttribute.fromColor(CONE_COLOR),
-          },
-        })],
+        ],
         appearance: new PerInstanceColorAppearance({
           closed: false,
           translucent: true,
@@ -96,17 +100,19 @@ export default function SatelliteFootprintOverlay() {
       })
 
       const footprint = new GroundPrimitive({
-        geometryInstances: [new GeometryInstance({
-          geometry: new EllipseGeometry({
-            center: groundPos,
-            semiMajorAxis: footprintRadius,
-            semiMinorAxis: footprintRadius,
-            height: 0,
+        geometryInstances: [
+          new GeometryInstance({
+            geometry: new EllipseGeometry({
+              center: groundPos,
+              semiMajorAxis: footprintRadius,
+              semiMinorAxis: footprintRadius,
+              height: 0,
+            }),
+            attributes: {
+              color: ColorGeometryInstanceAttribute.fromColor(FOOTPRINT_COLOR),
+            },
           }),
-          attributes: {
-            color: ColorGeometryInstanceAttribute.fromColor(FOOTPRINT_COLOR),
-          },
-        })],
+        ],
         appearance: new PerInstanceColorAppearance({
           translucent: true,
           flat: true,
@@ -155,7 +161,6 @@ export default function SatelliteFootprintOverlay() {
       conePrimitiveRef.current = updated.cone
       footprintPrimitiveRef.current = updated.footprint
     }, PROPAGATION_INTERVAL_MS)
-
   }, [rawViewer, selected])
 
   // Cleanup on unmount.

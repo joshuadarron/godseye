@@ -14,9 +14,14 @@ registerLayer({
   label: 'Vessels',
   icon: (
     <svg className={ICON_CLASS} viewBox="0 0 24 24">
-      <path d="M3 17l2 4h14l2-4H3zM12 3v10M8 7h8l2 6H6l2-6z"
-        fill="none" stroke="currentColor" strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M3 17l2 4h14l2-4H3zM12 3v10M8 7h8l2 6H6l2-6z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   store: useVesselStore as any,

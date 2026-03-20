@@ -18,10 +18,8 @@ export default memo(function LayerTab({ layer }: { layer: LayerConfig }) {
     <div onMouseEnter={handleEnter}>
       <button
         onClick={() => toggle(layer.key)}
-        className={`flex flex-col items-center justify-center w-20 h-20 text-xs font-medium cursor-pointer select-none transition-colors ${
-          active
-            ? 'text-white bg-white/10'
-            : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+        className={`flex h-20 w-20 cursor-pointer flex-col items-center justify-center text-xs font-medium transition-colors select-none ${
+          active ? 'bg-white/10 text-white' : 'text-white/40 hover:bg-white/5 hover:text-white/60'
         }`}
       >
         {layer.icon}

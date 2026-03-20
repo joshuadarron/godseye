@@ -48,8 +48,10 @@ function matchEntity(entity: Entity, layer: string, query: string): string | nul
   if (layer === 'events') {
     const eq = entity as any
     if (eq.place?.toLowerCase().includes(q)) return `M${eq.magnitude?.toFixed(1)} — ${eq.place}`
-    if (String(eq.magnitude).includes(q)) return `M${eq.magnitude?.toFixed(1)} — ${eq.place || eq.id}`
-    if (eq.id.toLowerCase().includes(q)) return `M${eq.magnitude?.toFixed(1)} — ${eq.place || eq.id}`
+    if (String(eq.magnitude).includes(q))
+      return `M${eq.magnitude?.toFixed(1)} — ${eq.place || eq.id}`
+    if (eq.id.toLowerCase().includes(q))
+      return `M${eq.magnitude?.toFixed(1)} — ${eq.place || eq.id}`
     return null
   }
 
@@ -94,32 +96,36 @@ export default memo(function SearchResultsPanel() {
   const results = useSearchResults(debouncedQuery)
   const setSelected = useSelectedEntityStore((s) => s.setSelected)
 
-  const handleSelect = useCallback((result: SearchResult) => {
-    setSelected({ layer: result.layer, entityId: result.entity.id })
+  const handleSelect = useCallback(
+    (result: SearchResult) => {
+      setSelected({ layer: result.layer, entityId: result.entity.id })
 
-    const viewer = getViewer()
-    if (!viewer) return
+      const viewer = getViewer()
+      if (!viewer) return
 
-    const rawAlt = (result.entity as any).altitude ?? 0
-    // Satellites store altitude in km; everything else in meters.
-    const alt = result.layer === 'satellites' ? rawAlt * 1000 : rawAlt
-    // Distance from entity to camera.
-    const range = alt > 100_000 ? alt * 2 : 50_000
+      const rawAlt = (result.entity as any).altitude ?? 0
+      // Satellites store altitude in km; everything else in meters.
+      const alt = result.layer === 'satellites' ? rawAlt * 1000 : rawAlt
+      // Distance from entity to camera.
+      const range = alt > 100_000 ? alt * 2 : 50_000
 
-    const target = Cartesian3.fromDegrees(result.entity.lng, result.entity.lat, alt)
-    viewer.camera.flyToBoundingSphere(new BoundingSphere(target, 0), {
-      offset: new HeadingPitchRange(0, CesiumMath.toRadians(-90), range),
-      duration: 1.5,
-    })
-  }, [setSelected])
+      const target = Cartesian3.fromDegrees(result.entity.lng, result.entity.lat, alt)
+      viewer.camera.flyToBoundingSphere(new BoundingSphere(target, 0), {
+        offset: new HeadingPitchRange(0, CesiumMath.toRadians(-90), range),
+        duration: 1.5,
+      })
+    },
+    [setSelected],
+  )
 
   if (!debouncedQuery || results.length === 0) return null
 
   return (
-    <div className="mt-3 max-h-[calc(100vh-5rem)] w-80 overflow-y-auto scrollbar-hide flex flex-col gap-2">
+    <div className="scrollbar-hide mt-3 flex max-h-[calc(100vh-5rem)] w-80 flex-col gap-2 overflow-y-auto">
       <div className="px-4 py-2">
-        <span className="text-xs font-semibold uppercase tracking-widest text-white/40">
-          {results.length >= MAX_RESULTS ? `${MAX_RESULTS}+` : results.length} result{results.length !== 1 ? 's' : ''}
+        <span className="text-xs font-semibold tracking-widest text-white/40 uppercase">
+          {results.length >= MAX_RESULTS ? `${MAX_RESULTS}+` : results.length} result
+          {results.length !== 1 ? 's' : ''}
         </span>
       </div>
 
@@ -127,13 +133,11 @@ export default memo(function SearchResultsPanel() {
         <button
           key={`${result.layer}-${result.entity.id}`}
           onClick={() => handleSelect(result)}
-          className="flex items-center gap-3 w-full text-left px-4 py-3 cursor-pointer select-none transition-colors bg-black/50 backdrop-blur-md border border-white/[0.08] rounded-xl hover:bg-white/10"
+          className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-white/[0.08] bg-black/50 px-4 py-3 text-left backdrop-blur-md transition-colors select-none hover:bg-white/10"
         >
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-white/90 font-medium truncate">
-              {result.displayName}
-            </p>
-            <p className="text-xs text-white/35 mt-0.5">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-white/90">{result.displayName}</p>
+            <p className="mt-0.5 text-xs text-white/35">
               {result.layerLabel} &middot; {result.entity.id}
             </p>
           </div>

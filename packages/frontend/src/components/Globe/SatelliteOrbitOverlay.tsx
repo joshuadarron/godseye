@@ -54,7 +54,9 @@ export default function SatelliteOrbitOverlay() {
     if (!selected || selected.layer !== 'satellites') return
 
     // Read TLE data imperatively — we only need it once per selection, not on every store update.
-    const sat = useSatelliteStore.getState().entities.get(selected.entityId) as Satellite | undefined
+    const sat = useSatelliteStore.getState().entities.get(selected.entityId) as
+      | Satellite
+      | undefined
     if (!sat?.tle1 || !sat?.tle2) return
 
     const satrec = twoline2satrec(sat.tle1, sat.tle2)
@@ -164,12 +166,17 @@ export default function SatelliteOrbitOverlay() {
 
     // Compute screen-space bounding box of the orbit for modal placement.
     const setOrbitScreenBounds = useSelectedEntityStore.getState().setOrbitScreenBounds
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    let minX = Infinity,
+      maxX = -Infinity,
+      minY = Infinity,
+      maxY = -Infinity
     const scratchScreen = new Cartesian2()
 
     for (let i = 0; i < orbitPositions.length; i += 4) {
       const screenPos = SceneTransforms.worldToWindowCoordinates(
-        viewer.scene, orbitPositions[i], scratchScreen,
+        viewer.scene,
+        orbitPositions[i],
+        scratchScreen,
       )
       if (!screenPos) continue
       if (screenPos.x < minX) minX = screenPos.x
@@ -181,7 +188,6 @@ export default function SatelliteOrbitOverlay() {
     if (isFinite(minX)) {
       setOrbitScreenBounds({ minX, maxX, minY, maxY })
     }
-
   }, [rawViewer, selected])
 
   // Cleanup on unmount.

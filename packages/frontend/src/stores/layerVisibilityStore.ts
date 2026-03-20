@@ -54,18 +54,10 @@ export const EVENT_SUBTYPES: Record<string, string> = {
 }
 
 const defaultSublayers: Record<string, SublayerMap> = {
-  flights: Object.fromEntries(
-    Object.keys(FLIGHT_SUBTYPES).map((k) => [k, true]),
-  ),
-  satellites: Object.fromEntries(
-    Object.keys(SATELLITE_SUBTYPES).map((k) => [k, true]),
-  ),
-  vessels: Object.fromEntries(
-    Object.keys(VESSEL_SUBTYPES).map((k) => [k, true]),
-  ),
-  events: Object.fromEntries(
-    Object.keys(EVENT_SUBTYPES).map((k) => [k, true]),
-  ),
+  flights: Object.fromEntries(Object.keys(FLIGHT_SUBTYPES).map((k) => [k, true])),
+  satellites: Object.fromEntries(Object.keys(SATELLITE_SUBTYPES).map((k) => [k, true])),
+  vessels: Object.fromEntries(Object.keys(VESSEL_SUBTYPES).map((k) => [k, true])),
+  events: Object.fromEntries(Object.keys(EVENT_SUBTYPES).map((k) => [k, true])),
 }
 
 export const useLayerVisibilityStore = create<LayerVisibilityState>((set, get) => ({
@@ -83,9 +75,7 @@ export const useLayerVisibilityStore = create<LayerVisibilityState>((set, get) =
       const nowOn = !state.layers[layer]
       const sublayers = { ...state.sublayers }
       if (nowOn && sublayers[layer]) {
-        sublayers[layer] = Object.fromEntries(
-          Object.keys(sublayers[layer]).map((k) => [k, true]),
-        )
+        sublayers[layer] = Object.fromEntries(Object.keys(sublayers[layer]).map((k) => [k, true]))
       }
       return { layers: { ...state.layers, [layer]: nowOn }, sublayers }
     }),
@@ -100,9 +90,7 @@ export const useLayerVisibilityStore = create<LayerVisibilityState>((set, get) =
   setAllSublayers: (layer, enabled) =>
     set((state) => {
       const current = state.sublayers[layer] ?? {}
-      const updated = Object.fromEntries(
-        Object.keys(current).map((k) => [k, enabled]),
-      )
+      const updated = Object.fromEntries(Object.keys(current).map((k) => [k, enabled]))
       return { sublayers: { ...state.sublayers, [layer]: updated } }
     }),
 
@@ -115,18 +103,68 @@ export const useLayerVisibilityStore = create<LayerVisibilityState>((set, get) =
 
 // Known ICAO airline prefixes for cargo carriers.
 const CARGO_PREFIXES = new Set([
-  'FDX', 'UPS', 'GTI', 'CLX', 'ABW', 'CKS', 'BOX', 'KAL', // FedEx, UPS, Atlas, Cargolux, AirBridgeCargo, Kalitta, Aerologic
-  'GEC', 'MPH', 'SQC', 'CAO', 'ABD', 'QAC', 'ETD', 'DHK', // Lufthansa Cargo, Martinair, SIA Cargo, Air China Cargo
-  'POC', 'SLK', 'TWY', 'NCR',
+  'FDX',
+  'UPS',
+  'GTI',
+  'CLX',
+  'ABW',
+  'CKS',
+  'BOX',
+  'KAL', // FedEx, UPS, Atlas, Cargolux, AirBridgeCargo, Kalitta, Aerologic
+  'GEC',
+  'MPH',
+  'SQC',
+  'CAO',
+  'ABD',
+  'QAC',
+  'ETD',
+  'DHK', // Lufthansa Cargo, Martinair, SIA Cargo, Air China Cargo
+  'POC',
+  'SLK',
+  'TWY',
+  'NCR',
 ])
 
 // Known military callsign prefixes/patterns.
 const MILITARY_PREFIXES = new Set([
-  'RCH', 'DUKE', 'NAVY', 'EVAC', 'MOOSE', 'COBRA', 'TOPCAT', 'BRONCO',
-  'TITAN', 'EAGLE', 'HAWK', 'VIPER', 'MAGMA', 'DOOM', 'THUD', 'BOLT',
-  'TREND', 'REACH', 'KING', 'NCHO', 'JAKE', 'SPAR', 'SAM', 'EXEC',
-  'PACK', 'STAB', 'ORCA', 'CNV', 'RRR', 'IAM', 'MMF', 'PLF', 'BAF',
-  'GAF', 'RFR', 'SHF', 'CASA', 'FAF',
+  'RCH',
+  'DUKE',
+  'NAVY',
+  'EVAC',
+  'MOOSE',
+  'COBRA',
+  'TOPCAT',
+  'BRONCO',
+  'TITAN',
+  'EAGLE',
+  'HAWK',
+  'VIPER',
+  'MAGMA',
+  'DOOM',
+  'THUD',
+  'BOLT',
+  'TREND',
+  'REACH',
+  'KING',
+  'NCHO',
+  'JAKE',
+  'SPAR',
+  'SAM',
+  'EXEC',
+  'PACK',
+  'STAB',
+  'ORCA',
+  'CNV',
+  'RRR',
+  'IAM',
+  'MMF',
+  'PLF',
+  'BAF',
+  'GAF',
+  'RFR',
+  'SHF',
+  'CASA',
+  'FAF',
 ])
 
 /** Classify a flight into a subtype key based on callsign and state. */
@@ -187,7 +225,8 @@ export function classifySatellite(name: string): string {
     upper.includes('GLONASS') ||
     upper.includes('GALILEO') ||
     upper.includes('BEIDOU')
-  ) return 'gps'
+  )
+    return 'gps'
   if (
     upper.includes('NOAA') ||
     upper.includes('GOES') ||
@@ -195,12 +234,10 @@ export function classifySatellite(name: string): string {
     upper.includes('METEOR') ||
     upper.includes('FENGYUN') ||
     upper.includes('HIMAWARI')
-  ) return 'weather'
-  if (
-    upper.includes('ISS') ||
-    upper.includes('TIANGONG') ||
-    upper.includes('ZARYA')
-  ) return 'stations'
+  )
+    return 'weather'
+  if (upper.includes('ISS') || upper.includes('TIANGONG') || upper.includes('ZARYA'))
+    return 'stations'
   if (
     upper.includes('USA ') ||
     upper.includes('NROL') ||
@@ -208,7 +245,8 @@ export function classifySatellite(name: string): string {
     upper.includes('MUOS') ||
     upper.includes('SBIRS') ||
     upper.includes('DSP')
-  ) return 'military'
+  )
+    return 'military'
   if (upper.includes('IRIDIUM')) return 'iridium'
   if (
     upper.includes('HUBBLE') ||
@@ -218,6 +256,7 @@ export function classifySatellite(name: string): string {
     upper.includes('CALIPSO') ||
     upper.includes('AURA') ||
     upper.includes('JASON')
-  ) return 'science'
+  )
+    return 'science'
   return 'other'
 }

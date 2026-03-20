@@ -21,8 +21,8 @@ export default function SatelliteDetailPanel() {
   const clearSelected = useSelectedEntityStore((s) => s.clearSelected)
 
   // Align with the search results panel: toolbar py-3 (12px) + search bar (~44px) + mt-3 (12px) = 68px.
-const PANEL_TOP = 119
-const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_TOP })
+  const PANEL_TOP = 119
+  const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_TOP })
 
   const [pos, setPos] = useState(defaultPos)
   const [initialized, setInitialized] = useState(false)
@@ -40,14 +40,17 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
     }
   }, [selected])
 
-  const onMoveDown = useCallback((e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest('button')) return
-    e.preventDefault()
-    mode.current = 'move'
-    startMouse.current = { x: e.clientX, y: e.clientY }
-    startPos.current = { ...pos }
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-  }, [pos])
+  const onMoveDown = useCallback(
+    (e: React.PointerEvent) => {
+      if ((e.target as HTMLElement).closest('button')) return
+      e.preventDefault()
+      mode.current = 'move'
+      startMouse.current = { x: e.clientX, y: e.clientY }
+      startPos.current = { ...pos }
+      ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    },
+    [pos],
+  )
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!mode.current) return
@@ -64,20 +67,31 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
   const sat = isOpen ? useSatelliteStore.getState().entities.get(selected!.entityId) : null
 
   // Local SGP4 propagation for smooth stat updates (100ms).
-  const [livePos, setLivePos] = useState<{ lat: number; lng: number; alt: number; vel: number } | null>(null)
+  const [livePos, setLivePos] = useState<{
+    lat: number
+    lng: number
+    alt: number
+    vel: number
+  } | null>(null)
   useEffect(() => {
-    if (!sat?.tle1 || !sat?.tle2) { setLivePos(null); return }
+    if (!sat?.tle1 || !sat?.tle2) {
+      setLivePos(null)
+      return
+    }
     const satrec = twoline2satrec(sat.tle1, sat.tle2)
     const tick = () => {
       const now = new Date()
       const posVel = propagate(satrec, now)
-      if (!posVel || typeof posVel.position === 'boolean' || typeof posVel.velocity === 'boolean') return
+      if (!posVel || typeof posVel.position === 'boolean' || typeof posVel.velocity === 'boolean')
+        return
       const gst = gstime(now)
       const geo = eciToGeodetic(posVel.position, gst)
       const lat = degreesLat(geo.latitude)
       const lng = degreesLong(geo.longitude)
       const alt = geo.height
-      const vel = Math.sqrt(posVel.velocity.x ** 2 + posVel.velocity.y ** 2 + posVel.velocity.z ** 2)
+      const vel = Math.sqrt(
+        posVel.velocity.x ** 2 + posVel.velocity.y ** 2 + posVel.velocity.z ** 2,
+      )
       if (!isNaN(lat) && !isNaN(lng) && !isNaN(alt)) {
         setLivePos({ lat, lng, alt, vel })
       }
@@ -103,30 +117,30 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
 
   return (
     <div
-      className="fixed z-[100] flex flex-col rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl"
+      className="fixed z-[100] flex flex-col overflow-hidden rounded-xl border border-white/[0.08] shadow-2xl"
       style={{ left: pos.x, top: pos.y, width: DEFAULT_WIDTH }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
       <div
         onPointerDown={onMoveDown}
-        className="flex items-center justify-between px-4 py-2.5 bg-black/40 backdrop-blur-md cursor-grab active:cursor-grabbing select-none border-b border-white/[0.08] shrink-0"
+        className="flex shrink-0 cursor-grab items-center justify-between border-b border-white/[0.08] bg-black/40 px-4 py-2.5 backdrop-blur-md select-none active:cursor-grabbing"
       >
-        <div className="flex items-center gap-2 min-w-0">
-          {entityIcon && <img src={entityIcon} alt="" className="w-5 h-5 opacity-60" />}
-          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-white/40 truncate">
+        <div className="flex min-w-0 items-center gap-2">
+          {entityIcon && <img src={entityIcon} alt="" className="h-5 w-5 opacity-60" />}
+          <h2 className="truncate text-[11px] font-semibold tracking-widest text-white/40 uppercase">
             {sat.name}
           </h2>
         </div>
         <Button
           onClick={clearSelected}
-          className="text-white/30 hover:text-white/60 text-lg leading-none cursor-pointer shrink-0 transition-colors"
+          className="shrink-0 cursor-pointer text-lg leading-none text-white/30 transition-colors hover:text-white/60"
         >
           &times;
         </Button>
       </div>
 
-      <div className="bg-black/40 backdrop-blur-md text-white px-4 py-3">
+      <div className="bg-black/40 px-4 py-3 text-white backdrop-blur-md">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           <DataField label="NORAD ID" value={String(sat.noradId)} />
           <DataField label="Latitude" value={`${displayLat.toFixed(4)}\u00B0`} />
@@ -135,7 +149,6 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
           <DataField label="Velocity" value={`${displayVel.toFixed(2)} km/s`} />
         </div>
       </div>
-
     </div>
   )
 }
@@ -143,8 +156,8 @@ const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_
 const DataField = memo(function DataField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <span className="text-white/35 text-[11px] uppercase tracking-wide">{label}</span>
-      <p className="text-white/90 text-sm font-medium">{value}</p>
+      <span className="text-[11px] tracking-wide text-white/35 uppercase">{label}</span>
+      <p className="text-sm font-medium text-white/90">{value}</p>
     </div>
   )
 })
