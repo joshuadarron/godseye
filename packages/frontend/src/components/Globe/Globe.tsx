@@ -23,6 +23,7 @@ import '../../registries/flights'
 import '../../registries/satellites'
 import '../../registries/vessels'
 import '../../registries/events'
+import '../../registries/conflicts'
 
 const token = import.meta.env.VITE_CESIUM_ION_TOKEN as string | undefined
 if (token) {

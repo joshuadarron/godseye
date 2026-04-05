@@ -23,4 +23,8 @@ func RegisterRoutes(mux *http.ServeMux, pool *pgxpool.Pool) {
 	eh := &earthquakeHandler{pool: pool}
 	mux.HandleFunc("GET /api/earthquakes", eh.list)
 	mux.HandleFunc("GET /api/earthquakes/{id}", eh.history)
+
+	ch := &conflictHandler{pool: pool}
+	mux.HandleFunc("GET /api/conflicts", ch.list)
+	mux.HandleFunc("GET /api/conflicts/{id}", ch.history)
 }

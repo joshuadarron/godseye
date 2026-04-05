@@ -8,6 +8,7 @@ import '../stores/flightStore'
 import '../stores/satelliteStore'
 import '../stores/vesselStore'
 import '../stores/earthquakeStore'
+import '../stores/conflictStore'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 

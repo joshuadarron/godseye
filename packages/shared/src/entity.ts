@@ -69,3 +69,19 @@ export interface Earthquake extends Entity {
   magType: string
   status: string
 }
+
+/** Armed conflict event from ACLED data. */
+export interface ArmedConflict extends Entity {
+  eventDate: string
+  eventType: string
+  subEventType: string
+  actor1: string
+  actor2: string
+  country: string
+  admin1: string
+  location: string
+  fatalities: number
+  notes: string
+  source: string
+  timestamp: string
+}

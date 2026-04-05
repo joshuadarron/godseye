@@ -53,11 +53,21 @@ export const EVENT_SUBTYPES: Record<string, string> = {
   minor: 'Minor (<3)',
 }
 
+export const CONFLICT_SUBTYPES: Record<string, string> = {
+  battles: 'Battles',
+  violence_civilians: 'Violence against civilians',
+  explosions: 'Explosions/Remote violence',
+  protests: 'Protests',
+  riots: 'Riots',
+  strategic: 'Strategic developments',
+}
+
 const defaultSublayers: Record<string, SublayerMap> = {
   flights: Object.fromEntries(Object.keys(FLIGHT_SUBTYPES).map((k) => [k, true])),
   satellites: Object.fromEntries(Object.keys(SATELLITE_SUBTYPES).map((k) => [k, true])),
   vessels: Object.fromEntries(Object.keys(VESSEL_SUBTYPES).map((k) => [k, true])),
   events: Object.fromEntries(Object.keys(EVENT_SUBTYPES).map((k) => [k, true])),
+  conflicts: Object.fromEntries(Object.keys(CONFLICT_SUBTYPES).map((k) => [k, true])),
 }
 
 export const useLayerVisibilityStore = create<LayerVisibilityState>((set, get) => ({
@@ -67,6 +77,7 @@ export const useLayerVisibilityStore = create<LayerVisibilityState>((set, get) =
     vessels: false,
     trains: false,
     events: false,
+    conflicts: false,
   },
   sublayers: defaultSublayers,
 
@@ -212,6 +223,18 @@ export function classifyEarthquake(magnitude: number): string {
   if (magnitude >= 4) return 'moderate'
   if (magnitude >= 3) return 'light'
   return 'minor'
+}
+
+/** Classify a conflict into a subtype key based on ACLED event type. */
+export function classifyConflict(eventType: string): string {
+  const lower = eventType.toLowerCase()
+  if (lower.includes('battles')) return 'battles'
+  if (lower.includes('violence against civilians')) return 'violence_civilians'
+  if (lower.includes('explosion') || lower.includes('remote violence')) return 'explosions'
+  if (lower.includes('protest')) return 'protests'
+  if (lower.includes('riot')) return 'riots'
+  if (lower.includes('strategic')) return 'strategic'
+  return 'battles'
 }
 
 /** Classify a satellite name into a subtype key. */

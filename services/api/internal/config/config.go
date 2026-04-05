@@ -15,6 +15,7 @@ type Config struct {
 	AISStreamAPIKey   string
 
 	ACLEDAPIKey         string
+	ACLEDEmail          string
 	TicketmasterAPIKey  string
 	PredictHQAPIKey     string
 	OpenWeatherAPIKey   string
@@ -36,6 +37,7 @@ func Load() *Config {
 		AISStreamAPIKey:   os.Getenv("AISSTREAM_API_KEY"),
 
 		ACLEDAPIKey:         os.Getenv("ACLED_API_KEY"),
+		ACLEDEmail:          os.Getenv("ACLED_EMAIL"),
 		TicketmasterAPIKey:  os.Getenv("TICKETMASTER_API_KEY"),
 		PredictHQAPIKey:     os.Getenv("PREDICTHQ_API_KEY"),
 		OpenWeatherAPIKey:   os.Getenv("OPENWEATHER_API_KEY"),

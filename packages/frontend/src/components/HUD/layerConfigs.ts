@@ -7,6 +7,7 @@ import '../../registries/flights'
 import '../../registries/satellites'
 import '../../registries/vessels'
 import '../../registries/events'
+import '../../registries/conflicts'
 
 export interface LayerConfig {
   key: string

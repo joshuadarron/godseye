@@ -16,6 +16,7 @@ var DefaultChannels = []string{
 	"channel:trains",
 	"channel:satellites",
 	"channel:events",
+	"channel:conflicts",
 }
 
 // spatialLayers are layers whose entities contain lat/lng and should be filtered.

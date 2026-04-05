@@ -76,7 +76,8 @@ func main() {
 	satelliteWorker := ingestion.NewSatelliteWorker(pool, rdb)
 	vesselWorker := ingestion.NewVesselWorker(pool, rdb, cfg.AISStreamAPIKey)
 	earthquakeWorker := ingestion.NewEarthquakeWorker(pool, rdb)
-	mgr := ingestion.NewManager(flightWorker, satelliteWorker, vesselWorker, earthquakeWorker)
+	conflictWorker := ingestion.NewConflictWorker(pool, rdb, cfg.ACLEDAPIKey, cfg.ACLEDEmail)
+	mgr := ingestion.NewManager(flightWorker, satelliteWorker, vesselWorker, earthquakeWorker, conflictWorker)
 	go mgr.StartAll(ctx)
 
 	// Set up HTTP routes.
