@@ -24,7 +24,7 @@ registerLayer({
       />
     </svg>
   ),
-  store: useVesselStore as any,
+  store: useVesselStore,
   toModelEntity: (entity: Entity) => {
     const v = entity as Vessel
     return {

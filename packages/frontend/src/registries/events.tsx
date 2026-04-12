@@ -24,7 +24,7 @@ registerLayer({
       />
     </svg>
   ),
-  store: useEarthquakeStore as any,
+  store: useEarthquakeStore,
   toModelEntity: (entity: Entity) => {
     const eq = entity as Earthquake
     return {

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { DeltaMessage } from '../types/common'
 import { entityRegistry } from '../stores/entityRegistry'
 import { useAuthStore } from '../stores/authStore'
+import { useConnectionStore } from '../stores/connectionStore'
 
 // Ensure stores are registered before the hook runs.
 import '../stores/flightStore'
@@ -77,12 +78,14 @@ export function useWebSocket() {
       : ['godseye.v1']
 
     setStatus('connecting')
+    useConnectionStore.getState().setStatus('connecting')
     const ws = new WebSocket(baseUrl, protocols)
     wsRef.current = ws
     activeWs = ws
 
     ws.onopen = () => {
       setStatus('connected')
+      useConnectionStore.getState().setStatus('connected')
       retriesRef.current = 0
     }
 
@@ -100,6 +103,7 @@ export function useWebSocket() {
 
     ws.onclose = () => {
       setStatus('disconnected')
+      useConnectionStore.getState().setStatus('disconnected')
       activeWs = null
       scheduleReconnect()
     }

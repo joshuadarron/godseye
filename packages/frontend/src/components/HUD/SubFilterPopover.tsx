@@ -24,10 +24,15 @@ export default memo(function SubFilterPopover({
   const entries = Object.entries(subtypes)
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 shadow-2xl backdrop-blur-md">
+    <div
+      role="group"
+      aria-label="Sub-filters"
+      className="overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 shadow-2xl backdrop-blur-md"
+    >
       <div className="grid" style={{ gridTemplateColumns: `repeat(${columnCount}, 5rem)` }}>
         <button
           onClick={() => setAllSublayers(layerKey, !allOn)}
+          aria-pressed={allOn}
           className={`flex h-20 w-20 cursor-pointer flex-col items-center justify-center text-xs font-medium transition-colors select-none ${
             allOn ? 'bg-white/10 text-white' : 'text-white/40 hover:bg-white/5 hover:text-white/60'
           }`}
@@ -55,6 +60,7 @@ export default memo(function SubFilterPopover({
             <button
               key={subKey}
               onClick={() => toggleSublayer(layerKey, subKey)}
+              aria-pressed={active}
               className={`flex h-20 w-20 cursor-pointer flex-col items-center justify-center text-xs font-medium transition-colors select-none ${
                 active
                   ? 'bg-white/10 text-white'

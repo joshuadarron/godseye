@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { login } from '../../api/auth'
 import { useAuthStore } from '../../stores/authStore'
 
@@ -15,6 +15,14 @@ export default function LoginPage({ onSwitchToRegister, onClose }: LoginPageProp
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const setAuth = useAuthStore((s) => s.setAuth)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,10 +42,15 @@ export default function LoginPage({ onSwitchToRegister, onClose }: LoginPageProp
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-sm rounded-lg bg-gray-900 p-6 shadow-xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="login-title"
+        className="w-full max-w-sm rounded-lg bg-gray-900 p-4 shadow-xl sm:p-6"
+      >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Sign In</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <h2 id="login-title" className="text-lg font-semibold text-white">Sign In</h2>
+          <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-white">
             &times;
           </button>
         </div>

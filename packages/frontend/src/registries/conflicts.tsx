@@ -26,7 +26,7 @@ registerLayer({
       <circle cx="12" cy="21" r="1" fill="currentColor" />
     </svg>
   ),
-  store: useConflictStore as any,
+  store: useConflictStore,
   toModelEntity: (entity: Entity) => {
     const c = entity as ArmedConflict
     return {

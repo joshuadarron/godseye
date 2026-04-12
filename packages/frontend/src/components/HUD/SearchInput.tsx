@@ -15,6 +15,7 @@ export default memo(function SearchInput() {
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
+        aria-hidden="true"
       >
         <circle cx="11" cy="11" r="8" />
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -23,12 +24,17 @@ export default memo(function SearchInput() {
         type="text"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') setSearchQuery('')
+        }}
         placeholder="Search..."
-        className="w-80 rounded-full border border-white/[0.08] bg-black/40 py-3 pr-4 pl-9 text-sm text-white placeholder-white/30 backdrop-blur-md transition-colors outline-none focus:border-white/20"
+        aria-label="Search entities"
+        className="w-full rounded-full border border-white/[0.08] bg-black/40 py-3 pr-4 pl-9 text-sm text-white placeholder-white/30 backdrop-blur-md transition-colors outline-none focus:border-white/20 sm:w-80"
       />
       {searchQuery && (
         <button
           onClick={() => setSearchQuery('')}
+          aria-label="Clear search"
           className="absolute top-1/2 right-4 flex h-6 w-6 -translate-y-[55%] cursor-pointer items-center justify-center text-2xl leading-none text-white/30 transition-colors hover:text-white/60"
         >
           &times;

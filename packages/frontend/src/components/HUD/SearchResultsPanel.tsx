@@ -7,6 +7,10 @@ import { layerRegistry } from '../../registries/layerRegistry'
 import { useDebounce } from '../../hooks/useDebounce'
 import { getViewer } from '../../utils/viewerRef'
 import type { Entity } from '../../types/common'
+import type { Flight } from '../../types/flight'
+import type { Satellite } from '../../types/satellite'
+import type { Vessel } from '../../types/vessel'
+import type { Earthquake } from '../../types/earthquake'
 
 const MAX_RESULTS = 100
 
@@ -21,7 +25,7 @@ function matchEntity(entity: Entity, layer: string, query: string): string | nul
   const q = query.toLowerCase()
 
   if (layer === 'flights') {
-    const f = entity as any
+    const f = entity as Flight
     if (f.callsign?.toLowerCase().includes(q)) return f.callsign
     if (f.originCountry?.toLowerCase().includes(q)) return f.callsign || f.id
     if (f.id.toLowerCase().includes(q)) return f.callsign || f.id
@@ -29,7 +33,7 @@ function matchEntity(entity: Entity, layer: string, query: string): string | nul
   }
 
   if (layer === 'satellites') {
-    const s = entity as any
+    const s = entity as Satellite
     if (s.name?.toLowerCase().includes(q)) return s.name
     if (String(s.noradId).includes(q)) return s.name || String(s.noradId)
     if (s.id.toLowerCase().includes(q)) return s.name || s.id
@@ -37,7 +41,7 @@ function matchEntity(entity: Entity, layer: string, query: string): string | nul
   }
 
   if (layer === 'vessels') {
-    const v = entity as any
+    const v = entity as Vessel
     if (v.name?.toLowerCase().includes(q)) return v.name
     if (v.id.includes(q)) return v.name || v.id
     if (v.callsign?.toLowerCase().includes(q)) return v.name || v.callsign
@@ -46,7 +50,7 @@ function matchEntity(entity: Entity, layer: string, query: string): string | nul
   }
 
   if (layer === 'events') {
-    const eq = entity as any
+    const eq = entity as Earthquake
     if (eq.place?.toLowerCase().includes(q)) return `M${eq.magnitude?.toFixed(1)} — ${eq.place}`
     if (String(eq.magnitude).includes(q))
       return `M${eq.magnitude?.toFixed(1)} — ${eq.place || eq.id}`
@@ -103,7 +107,7 @@ export default memo(function SearchResultsPanel() {
       const viewer = getViewer()
       if (!viewer) return
 
-      const rawAlt = (result.entity as any).altitude ?? 0
+      const rawAlt = (result.entity as Flight | Satellite).altitude ?? 0
       // Satellites store altitude in km; everything else in meters.
       const alt = result.layer === 'satellites' ? rawAlt * 1000 : rawAlt
       // Distance from entity to camera.
@@ -118,10 +122,22 @@ export default memo(function SearchResultsPanel() {
     [setSelected],
   )
 
-  if (!debouncedQuery || results.length === 0) return null
+  if (!debouncedQuery) return null
+
+  if (results.length === 0) {
+    return (
+      <div className="mt-3 w-full sm:w-80" role="listbox" aria-live="polite">
+        <div className="px-4 py-3 text-center text-xs text-white/40">No results found</div>
+      </div>
+    )
+  }
 
   return (
-    <div className="scrollbar-hide mt-3 flex max-h-[calc(100vh-5rem)] w-80 flex-col gap-2 overflow-y-auto">
+    <div
+      className="scrollbar-hide mt-3 flex max-h-[calc(100vh-5rem)] w-full flex-col gap-2 overflow-y-auto sm:w-80"
+      role="listbox"
+      aria-live="polite"
+    >
       <div className="px-4 py-2">
         <span className="text-xs font-semibold tracking-widest text-white/40 uppercase">
           {results.length >= MAX_RESULTS ? `${MAX_RESULTS}+` : results.length} result
@@ -132,6 +148,7 @@ export default memo(function SearchResultsPanel() {
       {results.map((result) => (
         <button
           key={`${result.layer}-${result.entity.id}`}
+          role="option"
           onClick={() => handleSelect(result)}
           className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-white/[0.08] bg-black/50 px-4 py-3 text-left backdrop-blur-md transition-colors select-none hover:bg-white/10"
         >

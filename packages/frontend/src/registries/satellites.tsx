@@ -28,7 +28,7 @@ registerLayer({
       <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   ),
-  store: useSatelliteStore as any,
+  store: useSatelliteStore,
   toModelEntity: (entity: Entity) => {
     const s = entity as Satellite
     return {

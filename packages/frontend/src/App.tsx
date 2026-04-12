@@ -6,6 +6,8 @@ import EntityDetailPanel from './components/HUD/EntityDetailPanel'
 import LoginPage from './components/Auth/LoginPage'
 import RegisterPage from './components/Auth/RegisterPage'
 import OAuthCallback from './components/Auth/OAuthCallback'
+import ErrorBoundary from './components/ErrorBoundary'
+import ConnectionStatus from './components/HUD/ConnectionStatus'
 import { useAuthStore } from './stores/authStore'
 import { logout } from './api/auth'
 
@@ -33,10 +35,13 @@ function App() {
   return (
     <div className="relative h-full w-full bg-black">
       {isOAuthCallback && <OAuthCallback />}
-      <Globe />
+      <ErrorBoundary>
+        <Globe />
+      </ErrorBoundary>
       <HUDToolbar />
       <EntityTooltip />
       <EntityDetailPanel />
+      <ConnectionStatus />
 
       {/* Auth button in top-right corner */}
       <div className="pointer-events-auto absolute top-4 right-4 z-40">
@@ -45,13 +50,14 @@ function App() {
             {user?.avatarUrl && (
               <img
                 src={user.avatarUrl}
-                alt=""
+                alt={user?.name ?? 'User avatar'}
                 className="h-7 w-7 rounded-full border border-gray-600"
               />
             )}
             <span className="text-sm text-gray-300">{user?.name || user?.email}</span>
             <button
               onClick={handleLogout}
+              aria-label="Sign out"
               className="rounded bg-gray-800 px-3 py-1 text-xs text-gray-300 hover:bg-gray-700"
             >
               Sign out
@@ -60,6 +66,7 @@ function App() {
         ) : (
           <button
             onClick={() => setAuthModal('login')}
+            aria-label="Sign in"
             className="rounded bg-gray-800 px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700"
           >
             Sign in

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { createElement } from 'react'
-import { layerRegistry, type LayerRegistration } from '../../registries/layerRegistry'
+import { layerRegistry } from '../../registries/layerRegistry'
 
 // Import registrations so the registry is populated.
 import '../../registries/flights'
@@ -19,8 +19,10 @@ export interface LayerConfig {
 
 const ICON_CLASS = 'w-7 h-7 shrink-0 fill-current'
 
-/** Static layer entries for layers not yet backed by data. */
-const PLACEHOLDER_LAYERS: LayerRegistration[] = [
+/** Placeholder layers not yet backed by data — only need display fields. */
+type PlaceholderLayer = Pick<LayerConfig, 'key' | 'label' | 'icon'>
+
+const PLACEHOLDER_LAYERS: PlaceholderLayer[] = [
   {
     key: 'trains',
     label: 'Trains',
@@ -45,7 +47,7 @@ const PLACEHOLDER_LAYERS: LayerRegistration[] = [
         strokeLinejoin: 'round',
       }),
     ),
-  } as any,
+  },
 ]
 
 export function buildLayerConfigs(): LayerConfig[] {

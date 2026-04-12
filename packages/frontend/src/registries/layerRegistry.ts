@@ -8,7 +8,9 @@ export interface LayerRegistration {
   key: string
   label: string
   icon: ReactNode
-  store: UseBoundStore<StoreApi<EntityStoreState<Entity>>>
+  // Widened to accept stores of any entity type — concentrates the single `any` here.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  store: UseBoundStore<StoreApi<EntityStoreState<any>>>
   toModelEntity: (entity: Entity) => ModelEntity
   iconUrl: string
   fallbackColor: Color

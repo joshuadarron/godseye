@@ -1,59 +1,22 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useEffect } from 'react'
 import { Button } from '@headlessui/react'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useEarthquakeStore } from '../../stores/earthquakeStore'
 import { layerRegistry } from '../../registries/layerRegistry'
+import { useDraggablePanel } from '../../hooks/useDraggablePanel'
 
 const DEFAULT_WIDTH = 360
-
-type DragMode = 'move' | null
 
 export default function EarthquakeDetailPanel() {
   const selected = useSelectedEntityStore((s) => s.selected)
   const clearSelected = useSelectedEntityStore((s) => s.clearSelected)
 
-  const PANEL_TOP = 119
-  const defaultPos = () => ({ x: window.innerWidth - DEFAULT_WIDTH - 16, y: PANEL_TOP })
-
-  const [pos, setPos] = useState(defaultPos)
-  const [initialized, setInitialized] = useState(false)
-
-  const mode = useRef<DragMode>(null)
-  const startMouse = useRef({ x: 0, y: 0 })
-  const startPos = useRef({ x: 0, y: 0 })
+  const { pos, initialized, resetPosition, onPointerDownHeader, onPointerMove, onPointerUp } =
+    useDraggablePanel({ layerKey: 'events', onClose: clearSelected })
 
   useEffect(() => {
-    if (selected && selected.layer === 'events') {
-      setPos(defaultPos())
-      setInitialized(true)
-    } else {
-      setInitialized(false)
-    }
-  }, [selected])
-
-  const onMoveDown = useCallback(
-    (e: React.PointerEvent) => {
-      if ((e.target as HTMLElement).closest('button')) return
-      if ((e.target as HTMLElement).closest('a')) return
-      e.preventDefault()
-      mode.current = 'move'
-      startMouse.current = { x: e.clientX, y: e.clientY }
-      startPos.current = { ...pos }
-      ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-    },
-    [pos],
-  )
-
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!mode.current) return
-    const dx = e.clientX - startMouse.current.x
-    const dy = e.clientY - startMouse.current.y
-    setPos({ x: startPos.current.x + dx, y: startPos.current.y + dy })
-  }, [])
-
-  const onPointerUp = useCallback(() => {
-    mode.current = null
-  }, [])
+    resetPosition(selected?.layer)
+  }, [selected, resetPosition])
 
   const isOpen = !!(selected && selected.layer === 'events' && initialized)
   const eq = isOpen ? useEarthquakeStore.getState().entities.get(selected!.entityId) : null
@@ -76,13 +39,15 @@ export default function EarthquakeDetailPanel() {
 
   return (
     <div
+      role="dialog"
+      aria-label="Earthquake details"
       className="fixed z-[100] flex flex-col overflow-hidden rounded-xl border border-white/[0.08] shadow-2xl"
       style={{ left: pos.x, top: pos.y, width: DEFAULT_WIDTH }}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
       <div
-        onPointerDown={onMoveDown}
+        onPointerDown={onPointerDownHeader}
         className="flex shrink-0 cursor-grab items-center justify-between border-b border-white/[0.08] bg-black/40 px-4 py-2.5 backdrop-blur-md select-none active:cursor-grabbing"
       >
         <div className="flex min-w-0 items-center gap-2">
@@ -93,6 +58,7 @@ export default function EarthquakeDetailPanel() {
         </div>
         <Button
           onClick={clearSelected}
+          aria-label="Close panel"
           className="shrink-0 cursor-pointer text-lg leading-none text-white/30 transition-colors hover:text-white/60"
         >
           &times;
