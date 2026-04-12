@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Hi-perf / military fighter - delta wing, top-down, nose up -->
+  <!-- Fuselage (slim) -->
+  <path d="M32 4 C31 4 30.5 6 30.5 9 L31 50 C31 53 31.5 55 32 55 C32.5 55 33 53 33 50 L33.5 9 C33.5 6 33 4 32 4Z" fill="#ef9a9a" stroke="#ef5350" stroke-width="0.8"/>
+  <!-- Delta wings -->
+  <path d="M31 18 L8 42 L8 45 L31 34Z" fill="#ffcdd2" stroke="#ef5350" stroke-width="0.6"/>
+  <path d="M33 18 L56 42 L56 45 L33 34Z" fill="#ffcdd2" stroke="#ef5350" stroke-width="0.6"/>
+  <!-- Canards (small forward wings) -->
+  <path d="M31 14 L24 18 L24 19 L31 16Z" fill="#ef9a9a" stroke="#ef5350" stroke-width="0.4"/>
+  <path d="M33 14 L40 18 L40 19 L33 16Z" fill="#ef9a9a" stroke="#ef5350" stroke-width="0.4"/>
+  <!-- Vertical stabilizers (twin) -->
+  <path d="M29 44 L27 48 L29 48Z" fill="#e53935" stroke="#c62828" stroke-width="0.4"/>
+  <path d="M35 44 L37 48 L35 48Z" fill="#e53935" stroke="#c62828" stroke-width="0.4"/>
+  <!-- Engine exhaust -->
+  <ellipse cx="30.5" cy="52" rx="1.5" ry="2" fill="#b71c1c" opacity="0.6"/>
+  <ellipse cx="33.5" cy="52" rx="1.5" ry="2" fill="#b71c1c" opacity="0.6"/>
+  <!-- Cockpit -->
+  <ellipse cx="32" cy="8" rx="1.5" ry="3" fill="#b71c1c"/>
+</svg>

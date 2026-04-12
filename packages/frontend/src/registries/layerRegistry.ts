@@ -22,6 +22,7 @@ export interface LayerRegistration {
   subtypeIcons?: Record<string, string>
   subtypeColors?: Record<string, Color>
   classifySubtype?: (entity: Entity) => string
+  subtypeNoRotate?: Record<string, boolean>
   detailPanel?: ComponentType<{ entityId: string }>
   tooltip?: ComponentType<{ entityId: string }>
   overlays?: ComponentType[]

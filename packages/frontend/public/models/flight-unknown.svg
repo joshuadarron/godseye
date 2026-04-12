@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Unknown aircraft - generic simple silhouette, top-down, nose up -->
+  <!-- Fuselage -->
+  <path d="M32 8 C30.5 8 29.5 10 29.5 13 L30 52 C30 55 31 57 32 57 C33 57 34 55 34 52 L34.5 13 C34.5 10 33.5 8 32 8Z" fill="#9e9e9e" stroke="#757575" stroke-width="0.7"/>
+  <!-- Simple wings -->
+  <path d="M30 26 L10 33 L10 36 L30 31Z" fill="#bdbdbd" stroke="#757575" stroke-width="0.6"/>
+  <path d="M34 26 L54 33 L54 36 L34 31Z" fill="#bdbdbd" stroke="#757575" stroke-width="0.6"/>
+  <!-- Tail -->
+  <path d="M31 49 L24 53 L24 55 L31 52Z" fill="#9e9e9e" stroke="#757575" stroke-width="0.5"/>
+  <path d="M33 49 L40 53 L40 55 L33 52Z" fill="#9e9e9e" stroke="#757575" stroke-width="0.5"/>
+  <!-- Cockpit -->
+  <ellipse cx="32" cy="11" rx="1.8" ry="2.5" fill="#616161"/>
+</svg>

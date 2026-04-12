@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Balloon - lighter-than-air, top-down (circular envelope) -->
+  <!-- Envelope -->
+  <circle cx="32" cy="28" r="20" fill="#f8bbd0" stroke="#f48fb1" stroke-width="1"/>
+  <!-- Envelope panels -->
+  <path d="M32 8 Q38 28 32 48" stroke="#f48fb1" stroke-width="0.5" fill="none"/>
+  <path d="M32 8 Q26 28 32 48" stroke="#f48fb1" stroke-width="0.5" fill="none"/>
+  <path d="M12 28 Q32 22 52 28" stroke="#f48fb1" stroke-width="0.5" fill="none"/>
+  <path d="M12 28 Q32 34 52 28" stroke="#f48fb1" stroke-width="0.5" fill="none"/>
+  <!-- Basket rigging -->
+  <line x1="26" y1="46" x2="28" y2="54" stroke="#ad1457" stroke-width="0.6"/>
+  <line x1="38" y1="46" x2="36" y2="54" stroke="#ad1457" stroke-width="0.6"/>
+  <!-- Basket -->
+  <rect x="27" y="54" width="10" height="6" rx="1" fill="#ad1457" stroke="#880e4f" stroke-width="0.6"/>
+</svg>

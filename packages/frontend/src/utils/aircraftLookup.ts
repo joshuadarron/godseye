@@ -10,16 +10,28 @@ export interface AircraftMeta {
 type AircraftMap = Map<string, AircraftMeta>
 
 let aircraftPromise: Promise<AircraftMap> | null = null
+let aircraftMap: AircraftMap | null = null
 
 async function loadAircraft(): Promise<AircraftMap> {
   const res = await fetch('/data/aircraft.json')
   const data: Record<string, AircraftMeta> = await res.json()
-  return new Map(Object.entries(data))
+  aircraftMap = new Map(Object.entries(data))
+  return aircraftMap
 }
 
 function getAircraft(): Promise<AircraftMap> {
   if (!aircraftPromise) aircraftPromise = loadAircraft()
   return aircraftPromise
+}
+
+/** Synchronous access to the aircraft DB (null until loaded). */
+export function getAircraftDb(): AircraftMap | null {
+  return aircraftMap
+}
+
+/** Eagerly start loading the aircraft DB. */
+export function initAircraftDb(): void {
+  getAircraft()
 }
 
 /**

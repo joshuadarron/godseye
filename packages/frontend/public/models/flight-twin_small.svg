@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Twin small - low-wing twin-engine prop, top-down, nose up -->
+  <!-- Fuselage -->
+  <path d="M32 7 C30.5 7 29.5 9 29.5 12 L30 52 C30 55 31 57 32 57 C33 57 34 55 34 52 L34.5 12 C34.5 9 33.5 7 32 7Z" fill="#b0bec5" stroke="#90a4ae" stroke-width="0.7"/>
+  <!-- Low wings -->
+  <path d="M30 26 L8 32 L8 35 L30 31Z" fill="#cfd8dc" stroke="#90a4ae" stroke-width="0.6"/>
+  <path d="M34 26 L56 32 L56 35 L34 31Z" fill="#cfd8dc" stroke="#90a4ae" stroke-width="0.6"/>
+  <!-- Engines on wings -->
+  <ellipse cx="18" cy="30" rx="2" ry="3.5" fill="#90a4ae" stroke="#78909c" stroke-width="0.5"/>
+  <ellipse cx="46" cy="30" rx="2" ry="3.5" fill="#90a4ae" stroke="#78909c" stroke-width="0.5"/>
+  <!-- Propeller discs -->
+  <ellipse cx="18" cy="26.5" rx="4" ry="1.2" fill="#78909c" opacity="0.5"/>
+  <ellipse cx="46" cy="26.5" rx="4" ry="1.2" fill="#78909c" opacity="0.5"/>
+  <!-- Tail -->
+  <path d="M31 49 L23 53 L23 55 L31 52Z" fill="#b0bec5" stroke="#90a4ae" stroke-width="0.5"/>
+  <path d="M33 49 L41 53 L41 55 L33 52Z" fill="#b0bec5" stroke="#90a4ae" stroke-width="0.5"/>
+  <!-- Cockpit -->
+  <ellipse cx="32" cy="10" rx="2" ry="2.5" fill="#546e7a"/>
+</svg>

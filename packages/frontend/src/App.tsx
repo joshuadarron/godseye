@@ -10,6 +10,10 @@ import ErrorBoundary from './components/ErrorBoundary'
 import ConnectionStatus from './components/HUD/ConnectionStatus'
 import { useAuthStore } from './stores/authStore'
 import { logout } from './api/auth'
+import { initAircraftClassifier } from './utils/aircraftClassifier'
+
+// Eagerly load aircraft classification data (non-blocking).
+initAircraftClassifier()
 
 type AuthModal = 'login' | 'register' | null
 

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { classifyAircraftIcon } from '../utils/aircraftClassifier'
 
 export interface SublayerMap {
   [sublayer: string]: boolean
@@ -15,11 +16,19 @@ interface LayerVisibilityState {
 }
 
 export const FLIGHT_SUBTYPES: Record<string, string> = {
-  commercial: 'Commercial',
-  cargo: 'Cargo',
-  military: 'Military',
-  private: 'Private / GA',
+  cessna: 'Single Engine',
+  twin_small: 'Twin Prop',
+  twin_large: 'Twin Turboprop',
+  jet_nonswept: 'Light Jet',
+  jet_swept: 'Mid Jet',
+  airliner: 'Airliner',
+  heavy_2e: 'Heavy Twin',
+  heavy_4e: 'Heavy Quad',
+  helicopter: 'Helicopter',
+  hi_perf: 'Military',
+  balloon: 'Balloon',
   ground: 'Ground',
+  unknown: 'Unknown',
 }
 
 export const VESSEL_SUBTYPES: Record<string, string> = {
@@ -112,96 +121,13 @@ export const useLayerVisibilityStore = create<LayerVisibilityState>((set, get) =
   },
 }))
 
-// Known ICAO airline prefixes for cargo carriers.
-const CARGO_PREFIXES = new Set([
-  'FDX',
-  'UPS',
-  'GTI',
-  'CLX',
-  'ABW',
-  'CKS',
-  'BOX',
-  'KAL', // FedEx, UPS, Atlas, Cargolux, AirBridgeCargo, Kalitta, Aerologic
-  'GEC',
-  'MPH',
-  'SQC',
-  'CAO',
-  'ABD',
-  'QAC',
-  'ETD',
-  'DHK', // Lufthansa Cargo, Martinair, SIA Cargo, Air China Cargo
-  'POC',
-  'SLK',
-  'TWY',
-  'NCR',
-])
-
-// Known military callsign prefixes/patterns.
-const MILITARY_PREFIXES = new Set([
-  'RCH',
-  'DUKE',
-  'NAVY',
-  'EVAC',
-  'MOOSE',
-  'COBRA',
-  'TOPCAT',
-  'BRONCO',
-  'TITAN',
-  'EAGLE',
-  'HAWK',
-  'VIPER',
-  'MAGMA',
-  'DOOM',
-  'THUD',
-  'BOLT',
-  'TREND',
-  'REACH',
-  'KING',
-  'NCHO',
-  'JAKE',
-  'SPAR',
-  'SAM',
-  'EXEC',
-  'PACK',
-  'STAB',
-  'ORCA',
-  'CNV',
-  'RRR',
-  'IAM',
-  'MMF',
-  'PLF',
-  'BAF',
-  'GAF',
-  'RFR',
-  'SHF',
-  'CASA',
-  'FAF',
-])
-
-/** Classify a flight into a subtype key based on callsign and state. */
-export function classifyFlight(callsign: string, onGround: boolean): string {
-  if (onGround) return 'ground'
-
-  const cs = callsign.trim().toUpperCase()
-  if (!cs) return 'private'
-
-  // Check 3-letter ICAO prefix for cargo.
-  const prefix3 = cs.slice(0, 3)
-  if (CARGO_PREFIXES.has(prefix3)) return 'cargo'
-
-  // Check military — full match on known callsign words or prefixes.
-  if (MILITARY_PREFIXES.has(prefix3)) return 'military'
-  for (const mp of MILITARY_PREFIXES) {
-    if (cs.startsWith(mp)) return 'military'
+/** Classify a flight into an icon subtype using aircraft-type-based classification. */
+export function classifyFlight(id: string, category: number, onGround: boolean): string {
+  // Ground override: if on ground and not a ground-vehicle category, show as ground
+  if (onGround && category !== 14 && category !== 16 && category !== 17) {
+    return 'ground'
   }
-
-  // If callsign has a 3-letter prefix followed by digits, it's likely a scheduled airline flight.
-  if (/^[A-Z]{3}\d/.test(cs)) return 'commercial'
-
-  // Two-letter IATA-style codes followed by digits (e.g., UA123).
-  if (/^[A-Z]{2}\d/.test(cs)) return 'commercial'
-
-  return 'private'
+  return classifyAircraftIcon(id, category)
 }
 
 /** Classify a vessel into a subtype key based on AIS ship type code. */

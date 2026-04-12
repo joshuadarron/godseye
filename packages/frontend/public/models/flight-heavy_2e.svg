@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Heavy 2-engine - widebody twin (777/787/A330), top-down, nose up -->
+  <!-- Fuselage (wider than airliner) -->
+  <path d="M32 4 C29.5 4 28 7 28 11 L28.5 52 C28.5 55.5 30 59 32 59 C34 59 35.5 55.5 35.5 52 L36 11 C36 7 34.5 4 32 4Z" fill="#c5cae9" stroke="#7986cb" stroke-width="0.8"/>
+  <!-- Large swept wings -->
+  <path d="M28.5 24 L5 35 L5 38 L28.5 30Z" fill="#e8eaf6" stroke="#7986cb" stroke-width="0.6"/>
+  <path d="M35.5 24 L59 35 L59 38 L35.5 30Z" fill="#e8eaf6" stroke="#7986cb" stroke-width="0.6"/>
+  <!-- Large underwing engines -->
+  <ellipse cx="16" cy="29" rx="2.5" ry="5" fill="#7986cb" stroke="#3f51b5" stroke-width="0.5"/>
+  <ellipse cx="48" cy="29" rx="2.5" ry="5" fill="#7986cb" stroke="#3f51b5" stroke-width="0.5"/>
+  <!-- Tail -->
+  <path d="M29.5 49 L20 54 L20 56 L29.5 52Z" fill="#c5cae9" stroke="#7986cb" stroke-width="0.5"/>
+  <path d="M34.5 49 L44 54 L44 56 L34.5 52Z" fill="#c5cae9" stroke="#7986cb" stroke-width="0.5"/>
+  <!-- Cockpit -->
+  <ellipse cx="32" cy="7" rx="2.5" ry="3" fill="#283593"/>
+</svg>

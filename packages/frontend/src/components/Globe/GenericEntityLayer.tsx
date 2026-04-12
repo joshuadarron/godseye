@@ -97,7 +97,7 @@ function DefaultEntityLayer({ registration: reg }: Props) {
           fallbackPixelSize={reg.fallbackPixelSize}
           iconScale={reg.iconScale}
           layerName={reg.key}
-          disableRotation={reg.disableRotation}
+          disableRotation={reg.subtypeNoRotate?.[subtype] ?? reg.disableRotation}
         />
       ))}
     </>

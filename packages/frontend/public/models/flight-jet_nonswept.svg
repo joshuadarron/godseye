@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Jet nonswept - straight-wing light jet, rear-mounted engines, nose up -->
+  <!-- Fuselage -->
+  <path d="M32 6 C30.5 6 29.5 8 29.5 11 L30 50 C30 54 31 57 32 57 C33 57 34 54 34 50 L34.5 11 C34.5 8 33.5 6 32 6Z" fill="#b2dfdb" stroke="#80cbc4" stroke-width="0.7"/>
+  <!-- Straight wings (no sweep) -->
+  <path d="M30 24 L7 30 L7 33 L30 29Z" fill="#e0f2f1" stroke="#80cbc4" stroke-width="0.6"/>
+  <path d="M34 24 L57 30 L57 33 L34 29Z" fill="#e0f2f1" stroke="#80cbc4" stroke-width="0.6"/>
+  <!-- Rear-mounted engines -->
+  <ellipse cx="27" cy="46" rx="2.5" ry="4" fill="#80cbc4" stroke="#4db6ac" stroke-width="0.5"/>
+  <ellipse cx="37" cy="46" rx="2.5" ry="4" fill="#80cbc4" stroke="#4db6ac" stroke-width="0.5"/>
+  <!-- T-tail -->
+  <path d="M31 52 L25 55 L25 57 L31 54Z" fill="#b2dfdb" stroke="#80cbc4" stroke-width="0.5"/>
+  <path d="M33 52 L39 55 L39 57 L33 54Z" fill="#b2dfdb" stroke="#80cbc4" stroke-width="0.5"/>
+  <!-- Cockpit -->
+  <ellipse cx="32" cy="9" rx="2" ry="3" fill="#00695c"/>
+</svg>

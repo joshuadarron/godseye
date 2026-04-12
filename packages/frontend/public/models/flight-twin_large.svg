@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Twin large - ATR/Dash 8 style turboprop, top-down, nose up -->
+  <!-- Fuselage (wider) -->
+  <path d="M32 6 C30 6 28.5 8 28.5 12 L29 52 C29 55 30.5 58 32 58 C33.5 58 35 55 35 52 L35.5 12 C35.5 8 34 6 32 6Z" fill="#b0bec5" stroke="#90a4ae" stroke-width="0.7"/>
+  <!-- High straight wings -->
+  <path d="M29 24 L5 31 L5 34 L29 29Z" fill="#cfd8dc" stroke="#90a4ae" stroke-width="0.6"/>
+  <path d="M35 24 L59 31 L59 34 L35 29Z" fill="#cfd8dc" stroke="#90a4ae" stroke-width="0.6"/>
+  <!-- Engine nacelles -->
+  <rect x="14" y="25" width="5" height="8" rx="2" fill="#90a4ae" stroke="#78909c" stroke-width="0.5"/>
+  <rect x="45" y="25" width="5" height="8" rx="2" fill="#90a4ae" stroke="#78909c" stroke-width="0.5"/>
+  <!-- Propeller discs -->
+  <ellipse cx="16.5" cy="24" rx="5" ry="1.5" fill="#78909c" opacity="0.5"/>
+  <ellipse cx="47.5" cy="24" rx="5" ry="1.5" fill="#78909c" opacity="0.5"/>
+  <!-- Tail (T-tail) -->
+  <path d="M31 52 L24 56 L24 58 L31 55Z" fill="#b0bec5" stroke="#90a4ae" stroke-width="0.5"/>
+  <path d="M33 52 L40 56 L40 58 L33 55Z" fill="#b0bec5" stroke="#90a4ae" stroke-width="0.5"/>
+  <!-- Cockpit -->
+  <ellipse cx="32" cy="9" rx="2.5" ry="3" fill="#546e7a"/>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Helicopter - rotor disc + fuselage + tail boom, top-down -->
+  <!-- Main rotor disc -->
+  <circle cx="32" cy="26" r="18" fill="#fff176" opacity="0.25" stroke="#fdd835" stroke-width="0.8" stroke-dasharray="3 2"/>
+  <!-- Rotor blades -->
+  <line x1="14" y1="26" x2="50" y2="26" stroke="#fdd835" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="32" y1="8" x2="32" y2="44" stroke="#fdd835" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Fuselage body -->
+  <ellipse cx="32" cy="28" rx="6" ry="8" fill="#fff9c4" stroke="#f9a825" stroke-width="0.8"/>
+  <!-- Tail boom -->
+  <path d="M32 36 L32 56" stroke="#f9a825" stroke-width="2" stroke-linecap="round"/>
+  <!-- Tail rotor -->
+  <line x1="28" y1="55" x2="36" y2="55" stroke="#fdd835" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Cockpit -->
+  <ellipse cx="32" cy="23" rx="3.5" ry="4" fill="#f57f17" opacity="0.6"/>
+  <!-- Rotor hub -->
+  <circle cx="32" cy="26" r="2" fill="#f9a825"/>
+</svg>

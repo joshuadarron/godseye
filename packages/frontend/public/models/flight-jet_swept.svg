@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Jet swept - business/regional jet with swept wings, nose up -->
+  <!-- Fuselage -->
+  <path d="M32 5 C30.5 5 29.5 7 29.5 11 L30 51 C30 54 31 57 32 57 C33 57 34 54 34 51 L34.5 11 C34.5 7 33.5 5 32 5Z" fill="#b2dfdb" stroke="#4db6ac" stroke-width="0.7"/>
+  <!-- Swept wings -->
+  <path d="M30 22 L8 34 L8 37 L30 29Z" fill="#e0f2f1" stroke="#4db6ac" stroke-width="0.6"/>
+  <path d="M34 22 L56 34 L56 37 L34 29Z" fill="#e0f2f1" stroke="#4db6ac" stroke-width="0.6"/>
+  <!-- Rear-mounted engines -->
+  <ellipse cx="27.5" cy="45" rx="2.5" ry="4.5" fill="#4db6ac" stroke="#00897b" stroke-width="0.5"/>
+  <ellipse cx="36.5" cy="45" rx="2.5" ry="4.5" fill="#4db6ac" stroke="#00897b" stroke-width="0.5"/>
+  <!-- T-tail -->
+  <path d="M31 51 L24 55 L24 57 L31 54Z" fill="#b2dfdb" stroke="#4db6ac" stroke-width="0.5"/>
+  <path d="M33 51 L40 55 L40 57 L33 54Z" fill="#b2dfdb" stroke="#4db6ac" stroke-width="0.5"/>
+  <!-- Cockpit -->
+  <ellipse cx="32" cy="8" rx="2" ry="3" fill="#004d40"/>
+</svg>

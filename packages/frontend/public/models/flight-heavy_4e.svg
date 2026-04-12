@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Heavy 4-engine - (747/A380/C-5), top-down, nose up -->
+  <!-- Fuselage (widest) -->
+  <path d="M32 3 C29 3 27.5 6 27.5 10 L28 52 C28 56 30 60 32 60 C34 60 36 56 36 52 L36.5 10 C36.5 6 35 3 32 3Z" fill="#d1c4e9" stroke="#9575cd" stroke-width="0.8"/>
+  <!-- Very large swept wings -->
+  <path d="M28 22 L3 35 L3 38 L28 29Z" fill="#ede7f6" stroke="#9575cd" stroke-width="0.6"/>
+  <path d="M36 22 L61 35 L61 38 L36 29Z" fill="#ede7f6" stroke="#9575cd" stroke-width="0.6"/>
+  <!-- 4 underwing engines -->
+  <ellipse cx="13" cy="28" rx="2" ry="4.5" fill="#9575cd" stroke="#7e57c2" stroke-width="0.5"/>
+  <ellipse cx="22" cy="27" rx="2" ry="4" fill="#9575cd" stroke="#7e57c2" stroke-width="0.5"/>
+  <ellipse cx="42" cy="27" rx="2" ry="4" fill="#9575cd" stroke="#7e57c2" stroke-width="0.5"/>
+  <ellipse cx="51" cy="28" rx="2" ry="4.5" fill="#9575cd" stroke="#7e57c2" stroke-width="0.5"/>
+  <!-- Tail -->
+  <path d="M29 50 L19 55 L19 57 L29 53Z" fill="#d1c4e9" stroke="#9575cd" stroke-width="0.5"/>
+  <path d="M35 50 L45 55 L45 57 L35 53Z" fill="#d1c4e9" stroke="#9575cd" stroke-width="0.5"/>
+  <!-- Cockpit (747-style hump) -->
+  <path d="M32 6 C30 6 29 7 29 9 L29 14 C29.5 15 30.5 15 32 15 L35 12 L35 9 C35 7 34 6 32 6Z" fill="#4527a0"/>
+</svg>
