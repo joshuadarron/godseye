@@ -24,21 +24,24 @@ type satelliteRow struct {
 func (h *satelliteHandler) list(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	limit, offset := parsePagination(r, 1000, 10000)
+
 	query := `
 		SELECT DISTINCT ON (norad_id)
 			norad_id, name, tle_line1, tle_line2, fetched_at
 		FROM satellite_tles
 		ORDER BY norad_id, fetched_at DESC
+		LIMIT $1 OFFSET $2
 	`
 
-	rows, err := h.pool.Query(ctx, query)
+	rows, err := h.pool.Query(ctx, query, limit, offset)
 	if err != nil {
 		http.Error(w, "query error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var results []satelliteRow
+	results := make([]satelliteRow, 0, limit)
 	for rows.Next() {
 		var s satelliteRow
 		var fetchedAt time.Time
@@ -50,11 +53,8 @@ func (h *satelliteHandler) list(w http.ResponseWriter, r *http.Request) {
 		results = append(results, s)
 	}
 
-	if results == nil {
-		results = []satelliteRow{}
-	}
-
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=60")
 	json.NewEncoder(w).Encode(results)
 }
 
@@ -124,5 +124,6 @@ func (h *satelliteHandler) history(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=60")
 	json.NewEncoder(w).Encode(results)
 }

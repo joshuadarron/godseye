@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useLayerVisibilityStore } from '../../stores/layerVisibilityStore'
 import ModelLayer, { type ModelEntity } from './ModelLayer'
 import type { LayerRegistration } from '../../registries/layerRegistry'
@@ -24,15 +24,36 @@ export default function GenericEntityLayer({ registration: reg }: Props) {
 function DefaultEntityLayer({ registration: reg }: Props) {
   const sublayerMap = useLayerVisibilityStore((s) => s.sublayers[reg.key])
   const entities = reg.store((s) => s.entities)
+  const version = reg.store((s) => s.version)
 
   const hasSubtypes = !!(reg.subtypes && reg.classifySubtype)
 
+  // Cache converted ModelEntity results to avoid re-converting unchanged entities.
+  const modelCacheRef = useRef(new Map<string, { entity: unknown; model: ModelEntity }>())
+
+  const getOrConvert = (id: string, entity: unknown): ModelEntity => {
+    const cached = modelCacheRef.current.get(id)
+    if (cached && cached.entity === entity) {
+      return cached.model
+    }
+    const model = reg.toModelEntity(entity as any)
+    modelCacheRef.current.set(id, { entity, model })
+    return model
+  }
+
   // Group entities by subtype (or single group if no subtypes).
   const grouped = useMemo(() => {
+    // Clean stale cache entries.
+    for (const key of modelCacheRef.current.keys()) {
+      if (!entities.has(key)) {
+        modelCacheRef.current.delete(key)
+      }
+    }
+
     if (!hasSubtypes) {
       const map = new Map<string, ModelEntity>()
       entities.forEach((entity, id) => {
-        map.set(id, reg.toModelEntity(entity))
+        map.set(id, getOrConvert(id, entity))
       })
       return new Map([['__default', map]])
     }
@@ -43,10 +64,11 @@ function DefaultEntityLayer({ registration: reg }: Props) {
       if (sublayerMap && !sublayerMap[subtype]) return
 
       if (!groups.has(subtype)) groups.set(subtype, new Map())
-      groups.get(subtype)!.set(id, reg.toModelEntity(entity))
+      groups.get(subtype)!.set(id, getOrConvert(id, entity))
     })
     return groups
-  }, [entities, sublayerMap, hasSubtypes, reg])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version, sublayerMap, hasSubtypes, reg])
 
   if (!hasSubtypes) {
     const map = grouped.get('__default')!

@@ -35,6 +35,8 @@ type vesselRow struct {
 func (h *vesselHandler) list(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	limit, offset := parsePagination(r, 500, 5000)
+
 	query := `
 		SELECT DISTINCT ON (mmsi)
 			mmsi, name, callsign,
@@ -45,16 +47,17 @@ func (h *vesselHandler) list(w http.ResponseWriter, r *http.Request) {
 		FROM vessels
 		WHERE recorded_at > NOW() - INTERVAL '10 minutes'
 		ORDER BY mmsi, recorded_at DESC
+		LIMIT $1 OFFSET $2
 	`
 
-	rows, err := h.pool.Query(ctx, query)
+	rows, err := h.pool.Query(ctx, query, limit, offset)
 	if err != nil {
 		http.Error(w, "query error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var results []vesselRow
+	results := make([]vesselRow, 0, limit)
 	for rows.Next() {
 		var v vesselRow
 		var recordedAt time.Time
@@ -71,11 +74,8 @@ func (h *vesselHandler) list(w http.ResponseWriter, r *http.Request) {
 		results = append(results, v)
 	}
 
-	if results == nil {
-		results = []vesselRow{}
-	}
-
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=5")
 	json.NewEncoder(w).Encode(results)
 }
 
@@ -87,6 +87,8 @@ func (h *vesselHandler) history(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return
 	}
+
+	limit, offset := parsePagination(r, 500, 5000)
 
 	from := r.URL.Query().Get("from")
 	to := r.URL.Query().Get("to")
@@ -123,16 +125,17 @@ func (h *vesselHandler) history(w http.ResponseWriter, r *http.Request) {
 		FROM vessels
 		WHERE mmsi = $1 AND recorded_at BETWEEN $2 AND $3
 		ORDER BY recorded_at ASC
+		LIMIT $4 OFFSET $5
 	`
 
-	rows, err := h.pool.Query(ctx, query, id, fromTime, toTime)
+	rows, err := h.pool.Query(ctx, query, id, fromTime, toTime, limit, offset)
 	if err != nil {
 		http.Error(w, "query error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var results []vesselRow
+	results := make([]vesselRow, 0, limit)
 	for rows.Next() {
 		var v vesselRow
 		var recordedAt time.Time
@@ -149,10 +152,7 @@ func (h *vesselHandler) history(w http.ResponseWriter, r *http.Request) {
 		results = append(results, v)
 	}
 
-	if results == nil {
-		results = []vesselRow{}
-	}
-
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=5")
 	json.NewEncoder(w).Encode(results)
 }

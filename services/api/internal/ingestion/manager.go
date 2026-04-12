@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 )
 
 // Manager holds a collection of ingestion Workers and manages their lifecycles.
@@ -27,7 +28,8 @@ func (m *Manager) Done() <-chan struct{} {
 }
 
 // StartAll launches each worker in its own goroutine and blocks until the
-// context is cancelled and all workers have stopped.
+// context is cancelled and all workers have stopped, or until a 30-second
+// shutdown timeout is reached.
 func (m *Manager) StartAll(ctx context.Context) {
 	var wg sync.WaitGroup
 
@@ -51,6 +53,19 @@ func (m *Manager) StartAll(ctx context.Context) {
 		}(w)
 	}
 
-	wg.Wait()
+	// Wait with a timeout to avoid blocking forever.
+	waitDone := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(waitDone)
+	}()
+
+	select {
+	case <-waitDone:
+		slog.Info("all ingestion workers stopped gracefully")
+	case <-time.After(30 * time.Second):
+		slog.Warn("timed out waiting for ingestion workers to stop")
+	}
+
 	close(m.done)
 }

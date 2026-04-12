@@ -112,19 +112,30 @@ type deltaEnvelope struct {
 
 // fanOut sends a message to every connected client. For spatial layers, entities
 // are filtered per-client based on their reported viewport bounds.
-// Slow clients whose send buffers are full are collected and unregistered after
-// releasing the read lock to avoid a RLock → Lock deadlock.
+// Snapshots the client list under RLock, then releases it before doing any
+// JSON parsing, spatial filtering, or channel sends.
 func (b *Broadcaster) fanOut(data []byte) {
+	// Snapshot clients under read lock.
 	b.mu.RLock()
-	var slow []*Client
+	clients := make([]*Client, 0, len(b.clients))
+	for c := range b.clients {
+		clients = append(clients, c)
+	}
+	b.mu.RUnlock()
+
+	if len(clients) == 0 {
+		return
+	}
 
 	// Parse the message once to determine if spatial filtering applies.
 	var envelope deltaEnvelope
-	parsed := false
 	var positions []positionedEntity
 	needsFiltering := false
+	parsed := false
 
-	for c := range b.clients {
+	var slow []*Client
+
+	for _, c := range clients {
 		bounds := c.Bounds()
 
 		// Fast path: no bounds set yet — send unfiltered raw bytes.
@@ -142,10 +153,15 @@ func (b *Broadcaster) fanOut(data []byte) {
 			parsed = true
 			if err := json.Unmarshal(data, &envelope); err != nil {
 				// Can't parse — send raw to all remaining clients.
-				b.sendRawToAll(data, &slow)
+				for _, rc := range clients {
+					select {
+					case rc.send <- data:
+					default:
+						slow = append(slow, rc)
+					}
+				}
 				break
 			}
-			// Only filter spatial layers with upsert action.
 			if spatialLayers[envelope.Layer] && envelope.Action == "upsert" {
 				needsFiltering = true
 				positions = make([]positionedEntity, len(envelope.Entities))
@@ -172,7 +188,6 @@ func (b *Broadcaster) fanOut(data []byte) {
 			}
 		}
 
-		// Skip sending if no entities match.
 		if len(filtered) == 0 {
 			continue
 		}
@@ -201,22 +216,9 @@ func (b *Broadcaster) fanOut(data []byte) {
 			slow = append(slow, c)
 		}
 	}
-	b.mu.RUnlock()
 
 	for _, c := range slow {
 		slog.Warn("dropping slow client")
 		b.Unregister(c)
-	}
-}
-
-// sendRawToAll is a fallback that sends raw bytes to all remaining clients
-// when the message can't be parsed for filtering.
-func (b *Broadcaster) sendRawToAll(data []byte, slow *[]*Client) {
-	for c := range b.clients {
-		select {
-		case c.send <- data:
-		default:
-			*slow = append(*slow, c)
-		}
 	}
 }

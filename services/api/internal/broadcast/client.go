@@ -28,7 +28,7 @@ type Client struct {
 func NewClient(conn *websocket.Conn, b *Broadcaster) *Client {
 	return &Client{
 		conn: conn,
-		send: make(chan []byte, 256),
+		send: make(chan []byte, 64),
 		b:    b,
 	}
 }

@@ -90,7 +90,7 @@ type VesselWorker struct {
 	rdb    *redis.Client
 	apiKey string
 
-	mu       sync.Mutex
+	mu       sync.RWMutex
 	vessels  map[string]*vesselState
 	failures int
 }
@@ -155,11 +155,13 @@ func (w *VesselWorker) run(ctx context.Context) error {
 	slog.Info("connected to aisstream.io")
 	w.failures = 0
 
-	// Start publish and persist tickers.
+	// Start publish, persist, and eviction tickers.
 	publishTicker := time.NewTicker(vesselPublishRate)
 	defer publishTicker.Stop()
 	persistTicker := time.NewTicker(vesselPersistRate)
 	defer persistTicker.Stop()
+	evictTicker := time.NewTicker(5 * time.Minute)
+	defer evictTicker.Stop()
 
 	// Read messages in a goroutine, publish/persist on tickers.
 	msgCh := make(chan []byte, 512)
@@ -197,6 +199,9 @@ func (w *VesselWorker) run(ctx context.Context) error {
 
 		case <-persistTicker.C:
 			w.persist(ctx)
+
+		case <-evictTicker.C:
+			w.evictStale()
 		}
 	}
 }
@@ -278,6 +283,23 @@ func (w *VesselWorker) handleMessage(data []byte) {
 	}
 }
 
+// evictStale removes vessels that haven't been updated in 30 minutes.
+func (w *VesselWorker) evictStale() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	cutoff := time.Now().Add(-30 * time.Minute)
+	evicted := 0
+	for id, v := range w.vessels {
+		if v.updated.Before(cutoff) {
+			delete(w.vessels, id)
+			evicted++
+		}
+	}
+	if evicted > 0 {
+		slog.Info("evicted stale vessels", "count", evicted, "remaining", len(w.vessels))
+	}
+}
+
 func (w *VesselWorker) applyPositionReport(v *vesselState, pr *aisPositionReport) {
 	if pr.Latitude < -90 || pr.Latitude > 90 || pr.Longitude < -180 || pr.Longitude > 180 {
 		return
@@ -293,16 +315,15 @@ func (w *VesselWorker) applyPositionReport(v *vesselState, pr *aisPositionReport
 }
 
 func (w *VesselWorker) publishDeltas(ctx context.Context) {
-	w.mu.Lock()
-	// Collect all vessels with valid positions.
-	var entities []models.VesselEntity
+	w.mu.RLock()
+	entities := make([]models.VesselEntity, 0, len(w.vessels))
 	for _, v := range w.vessels {
 		if v.Lat == 0 && v.Lng == 0 {
 			continue // No position yet.
 		}
 		entities = append(entities, v.VesselEntity)
 	}
-	w.mu.Unlock()
+	w.mu.RUnlock()
 
 	if len(entities) == 0 {
 		return
@@ -331,15 +352,15 @@ func (w *VesselWorker) publishDeltas(ctx context.Context) {
 }
 
 func (w *VesselWorker) persist(ctx context.Context) {
-	w.mu.Lock()
-	var entities []models.VesselEntity
+	w.mu.RLock()
+	entities := make([]models.VesselEntity, 0, len(w.vessels))
 	for _, v := range w.vessels {
 		if v.Lat == 0 && v.Lng == 0 {
 			continue
 		}
 		entities = append(entities, v.VesselEntity)
 	}
-	w.mu.Unlock()
+	w.mu.RUnlock()
 
 	if len(entities) == 0 {
 		return

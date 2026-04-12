@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -30,6 +31,8 @@ type flightRow struct {
 func (h *flightHandler) list(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	limit, offset := parsePagination(r, 500, 5000)
+
 	query := `
 		SELECT DISTINCT ON (icao24)
 			icao24, callsign, origin_country,
@@ -39,16 +42,17 @@ func (h *flightHandler) list(w http.ResponseWriter, r *http.Request) {
 		FROM flights
 		WHERE recorded_at > NOW() - INTERVAL '5 minutes'
 		ORDER BY icao24, recorded_at DESC
+		LIMIT $1 OFFSET $2
 	`
 
-	rows, err := h.pool.Query(ctx, query)
+	rows, err := h.pool.Query(ctx, query, limit, offset)
 	if err != nil {
 		http.Error(w, "query error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var results []flightRow
+	results := make([]flightRow, 0, limit)
 	for rows.Next() {
 		var f flightRow
 		var recordedAt time.Time
@@ -64,11 +68,8 @@ func (h *flightHandler) list(w http.ResponseWriter, r *http.Request) {
 		results = append(results, f)
 	}
 
-	if results == nil {
-		results = []flightRow{}
-	}
-
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=5")
 	json.NewEncoder(w).Encode(results)
 }
 
@@ -80,6 +81,8 @@ func (h *flightHandler) history(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return
 	}
+
+	limit, offset := parsePagination(r, 500, 5000)
 
 	from := r.URL.Query().Get("from")
 	to := r.URL.Query().Get("to")
@@ -115,16 +118,17 @@ func (h *flightHandler) history(w http.ResponseWriter, r *http.Request) {
 		FROM flights
 		WHERE icao24 = $1 AND recorded_at BETWEEN $2 AND $3
 		ORDER BY recorded_at ASC
+		LIMIT $4 OFFSET $5
 	`
 
-	rows, err := h.pool.Query(ctx, query, id, fromTime, toTime)
+	rows, err := h.pool.Query(ctx, query, id, fromTime, toTime, limit, offset)
 	if err != nil {
 		http.Error(w, "query error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var results []flightRow
+	results := make([]flightRow, 0, limit)
 	for rows.Next() {
 		var f flightRow
 		var recordedAt time.Time
@@ -140,10 +144,27 @@ func (h *flightHandler) history(w http.ResponseWriter, r *http.Request) {
 		results = append(results, f)
 	}
 
-	if results == nil {
-		results = []flightRow{}
-	}
-
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=5")
 	json.NewEncoder(w).Encode(results)
+}
+
+// parsePagination extracts limit and offset query parameters with bounds.
+func parsePagination(r *http.Request, defaultLimit, maxLimit int) (int, int) {
+	limit := defaultLimit
+	offset := 0
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			limit = n
+		}
+	}
+	if limit > maxLimit {
+		limit = maxLimit
+	}
+	if v := r.URL.Query().Get("offset"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			offset = n
+		}
+	}
+	return limit, offset
 }
