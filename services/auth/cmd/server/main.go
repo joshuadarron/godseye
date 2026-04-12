@@ -70,7 +70,8 @@ func main() {
 	handler := middleware.Chain(
 		middleware.RequestID,
 		middleware.Logging,
-		middleware.CORS,
+		middleware.SecurityHeaders,
+		middleware.CORSWithOrigins(cfg.AllowedOrigins),
 	)(mux)
 
 	srv := &http.Server{

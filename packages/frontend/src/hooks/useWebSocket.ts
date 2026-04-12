@@ -70,12 +70,14 @@ export function useWebSocket() {
     const baseUrl = import.meta.env.VITE_WS_URL as string | undefined
     if (!baseUrl) return
 
-    // Append access token as query param if authenticated.
+    // Use subprotocol for auth: godseye.v1.TOKEN, or godseye.v1 if anonymous.
     const accessToken = useAuthStore.getState().accessToken
-    const url = accessToken ? `${baseUrl}?token=${encodeURIComponent(accessToken)}` : baseUrl
+    const protocols = accessToken
+      ? [`godseye.v1.${accessToken}`]
+      : ['godseye.v1']
 
     setStatus('connecting')
-    const ws = new WebSocket(url)
+    const ws = new WebSocket(baseUrl, protocols)
     wsRef.current = ws
     activeWs = ws
 

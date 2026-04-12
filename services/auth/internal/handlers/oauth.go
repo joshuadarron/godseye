@@ -41,7 +41,7 @@ func NewOAuthHandler(cfg *config.Config, userRepo *repository.UserRepo, tokenRep
 			ClientID:     cfg.GithubClientID,
 			ClientSecret: cfg.GithubClientSecret,
 			Endpoint:     github.Endpoint,
-			RedirectURL:  fmt.Sprintf("http://localhost%s/auth/github/callback", cfg.ServerAddr),
+			RedirectURL:  fmt.Sprintf("%s/auth/github/callback", cfg.OAuthBaseURL),
 			Scopes:       []string{"user:email"},
 		}
 	}
@@ -51,7 +51,7 @@ func NewOAuthHandler(cfg *config.Config, userRepo *repository.UserRepo, tokenRep
 			ClientID:     cfg.GoogleClientID,
 			ClientSecret: cfg.GoogleClientSecret,
 			Endpoint:     google.Endpoint,
-			RedirectURL:  fmt.Sprintf("http://localhost%s/auth/google/callback", cfg.ServerAddr),
+			RedirectURL:  fmt.Sprintf("%s/auth/google/callback", cfg.OAuthBaseURL),
 			Scopes:       []string{"openid", "email", "profile"},
 		}
 	}
@@ -188,6 +188,8 @@ func (h *OAuthHandler) redirectWithTokens(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// SECURITY: Tokens in redirect URL query params are visible in browser history and server logs.
+	// TODO: Switch to a short-lived authorization code exchange pattern in production.
 	redirectURL := fmt.Sprintf("%s/auth/callback?access_token=%s&refresh_token=%s",
 		h.cfg.FrontendURL,
 		url.QueryEscape(accessToken),

@@ -4,9 +4,9 @@ services:
     ports:
       - '5432:5432'
     environment:
-      POSTGRES_USER: godseye
-      POSTGRES_PASSWORD: godseye
-      POSTGRES_DB: globaltracker
+      POSTGRES_USER: ${POSTGRES_USER:-godseye}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-godseye}
+      POSTGRES_DB: ${POSTGRES_DB:-globaltracker}
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
 

@@ -1,7 +1,9 @@
 package config
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -18,7 +20,9 @@ type Config struct {
 	GoogleClientID     string
 	GoogleClientSecret string
 
-	FrontendURL string
+	FrontendURL    string
+	AllowedOrigins []string
+	OAuthBaseURL   string
 }
 
 // Load reads configuration from environment variables, applying defaults where appropriate.
@@ -35,8 +39,22 @@ func Load() *Config {
 		GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 
-		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
+		FrontendURL:    getEnv("FRONTEND_URL", "http://localhost:5173"),
+		AllowedOrigins: parseOrigins(getEnv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")),
+		OAuthBaseURL:   getEnv("OAUTH_BASE_URL", fmt.Sprintf("http://localhost%s", getEnv("AUTH_SERVER_ADDR", ":8081"))),
 	}
+}
+
+func parseOrigins(raw string) []string {
+	parts := strings.Split(raw, ",")
+	origins := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			origins = append(origins, p)
+		}
+	}
+	return origins
 }
 
 func getEnv(key, fallback string) string {

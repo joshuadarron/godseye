@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 // Config holds all configuration values loaded from environment variables.
 type Config struct {
@@ -20,7 +23,8 @@ type Config struct {
 	PredictHQAPIKey     string
 	OpenWeatherAPIKey   string
 
-	JWTSecret string
+	JWTSecret      string
+	AllowedOrigins []string
 }
 
 // Load reads configuration from environment variables, applying defaults where appropriate.
@@ -42,8 +46,21 @@ func Load() *Config {
 		PredictHQAPIKey:     os.Getenv("PREDICTHQ_API_KEY"),
 		OpenWeatherAPIKey:   os.Getenv("OPENWEATHER_API_KEY"),
 
-		JWTSecret: os.Getenv("JWT_SECRET"),
+		JWTSecret:      os.Getenv("JWT_SECRET"),
+		AllowedOrigins: parseOrigins(getEnv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")),
 	}
+}
+
+func parseOrigins(raw string) []string {
+	parts := strings.Split(raw, ",")
+	origins := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			origins = append(origins, p)
+		}
+	}
+	return origins
 }
 
 func getEnv(key, fallback string) string {

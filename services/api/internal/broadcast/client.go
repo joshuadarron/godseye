@@ -73,6 +73,8 @@ func (c *Client) ReadPump(ctx context.Context) {
 		c.conn.Close(websocket.StatusNormalClosure, "read pump exiting")
 	}()
 
+	c.conn.SetReadLimit(64 * 1024) // 64 KB max message size from clients.
+
 	for {
 		_, data, err := c.conn.Read(ctx)
 		if err != nil {

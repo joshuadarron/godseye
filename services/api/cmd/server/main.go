@@ -82,7 +82,7 @@ func main() {
 
 	// Set up HTTP routes.
 	mux := http.NewServeMux()
-	mux.HandleFunc("/ws", ws.Handler(broadcaster, cfg.JWTSecret))
+	mux.HandleFunc("/ws", ws.Handler(broadcaster, cfg.JWTSecret, cfg.AllowedOrigins))
 	// TODO: To protect routes with auth, wrap handlers with middleware.Auth(cfg.JWTSecret):
 	//   mux.Handle("GET /api/protected", middleware.Auth(cfg.JWTSecret)(protectedHandler))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +94,8 @@ func main() {
 	handler := middleware.Chain(
 		middleware.RequestID,
 		middleware.Logging,
-		middleware.CORS,
+		middleware.SecurityHeaders,
+		middleware.CORSWithOrigins(cfg.AllowedOrigins),
 	)(mux)
 
 	srv := &http.Server{
