@@ -22,7 +22,15 @@ registerLayer({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <line x1="12" y1="14" x2="12" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line
+        x1="12"
+        y1="14"
+        x2="12"
+        y2="19"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
       <circle cx="12" cy="21" r="1" fill="currentColor" />
     </svg>
   ),

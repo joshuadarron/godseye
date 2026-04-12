@@ -73,9 +73,7 @@ export function useWebSocket() {
 
     // Use subprotocol for auth: godseye.v1.TOKEN, or godseye.v1 if anonymous.
     const accessToken = useAuthStore.getState().accessToken
-    const protocols = accessToken
-      ? [`godseye.v1.${accessToken}`]
-      : ['godseye.v1']
+    const protocols = accessToken ? [`godseye.v1.${accessToken}`] : ['godseye.v1']
 
     setStatus('connecting')
     useConnectionStore.getState().setStatus('connecting')

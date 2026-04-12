@@ -44,7 +44,11 @@ export default function HUDToolbar() {
             onMouseEnter={handleEnter}
             onMouseLeave={handleLeave}
           >
-            <div role="tablist" aria-label="Data layers" className="flex items-center rounded-xl border border-white/[0.08] bg-black/40 backdrop-blur-md">
+            <div
+              role="tablist"
+              aria-label="Data layers"
+              className="flex items-center rounded-xl border border-white/[0.08] bg-black/40 backdrop-blur-md"
+            >
               {LAYERS.map((layer) => (
                 <LayerTab key={layer.key} layer={layer} />
               ))}

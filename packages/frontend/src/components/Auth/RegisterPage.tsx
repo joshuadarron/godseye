@@ -48,7 +48,9 @@ export default function RegisterPage({ onSwitchToLogin, onClose }: RegisterPageP
         className="w-full max-w-sm rounded-lg bg-gray-900 p-4 shadow-xl sm:p-6"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 id="register-title" className="text-lg font-semibold text-white">Create Account</h2>
+          <h2 id="register-title" className="text-lg font-semibold text-white">
+            Create Account
+          </h2>
           <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-white">
             &times;
           </button>
