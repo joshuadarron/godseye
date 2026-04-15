@@ -62,18 +62,88 @@ Open **http://localhost:5173** — you should see a 3D globe with live flights a
 - [Go](https://go.dev/) 1.22+
 - [Node.js](https://nodejs.org/) 18+ and [pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) and Docker Compose
+- [Memgraph](https://memgraph.com/) (graph database for proximity detection)
+
+---
+
+## Setup
+
+### Install Dependencies
+
+```bash
+# Install frontend dependencies
+pnpm install
+
+# Download Go module dependencies
+cd services/api && go mod download && cd ../..
+```
+
+### Infrastructure (Docker Compose)
+
+```bash
+docker compose up -d
+```
+
+This spins up:
+- **TimescaleDB** (PostgreSQL + time-series) on port `5432`
+- **Redis** (cache + pub/sub) on port `6379`
+
+### Environment Variables
+
+Copy and fill in your `.env` at project root:
+
+```env
+# Backend
+DATABASE_URL=postgres://user:pass@localhost:5432/globaltracker
+REDIS_URL=redis://localhost:6379
+OPENSKY_USERNAME=
+OPENSKY_PASSWORD=
+AISHUB_USERNAME=
+ACLED_API_KEY=
+TICKETMASTER_API_KEY=
+PREDICTHQ_API_KEY=
+OPENWEATHER_API_KEY=
+
+# Frontend
+VITE_WS_URL=ws://localhost:8080/ws
+VITE_CESIUM_ION_TOKEN=
+```
+
+Most data source keys are optional for local dev. `DATABASE_URL`, `REDIS_URL`, and `VITE_CESIUM_ION_TOKEN` are required for core functionality.
+
+### Running the Backend
+
+```bash
+cd services/api
+go run cmd/server/main.go
+```
+
+WebSocket server starts on `localhost:8080`.
+
+### Running the Frontend
+
+```bash
+cd packages/frontend
+pnpm dev
+```
+
+Vite dev server starts on `localhost:5173`.
+
+### Running Tests
+
+```bash
+# Go tests
+cd services/api && go test ./...
+
+# Frontend tests
+cd packages/frontend && pnpm test
+```
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please open an issue to discuss your idea before submitting a PR.
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/my-feature`)
-3. Commit your changes (`git commit -m "feat: Add my feature."`)
-4. Push to the branch (`git push origin feat/my-feature`)
-5. Open a Pull Request
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
