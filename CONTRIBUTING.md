@@ -12,10 +12,12 @@ Contributions welcome! Follow these guidelines to keep things smooth.
 ## Code Style
 
 ### Go
+
 - Run `gofmt` and `go vet` before committing
 - Follow standard Go project layout conventions
 
 ### TypeScript / React
+
 - Run `pnpm lint` in `packages/frontend` before committing
 - Use Prettier for formatting: `pnpm format`
 - Follow existing component patterns in `src/components/`
@@ -33,6 +35,7 @@ Optional longer body explaining the "why".
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 Examples:
+
 - `feat(frontend): add satellite layer toggle`
 - `fix(api): handle nil pointer in vessel ingestion`
 - `docs: update setup instructions`
@@ -50,6 +53,7 @@ Keep subject line under 50 characters. Body wraps at 72.
 ## Reporting Issues
 
 Open a GitHub issue with:
+
 - Clear description of the problem or feature request
 - Steps to reproduce (for bugs)
 - Expected vs actual behavior

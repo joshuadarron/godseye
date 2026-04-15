@@ -85,6 +85,7 @@ docker compose up -d
 ```
 
 This spins up:
+
 - **TimescaleDB** (PostgreSQL + time-series) on port `5432`
 - **Redis** (cache + pub/sub) on port `6379`
 
