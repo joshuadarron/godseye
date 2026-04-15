@@ -59,7 +59,7 @@ WHERE (b:Flight OR b:Vessel OR b:Satellite)
   AND abs(a.lat - b.lat) < 5
   AND abs(a.lng - b.lng) < 5
 WITH a, b,
-     111.0 * sqrt((a.lat - b.lat)^2 + (cos(radians(a.lat)) * (a.lng - b.lng))^2) AS distKm
+     111.0 * sqrt((a.lat - b.lat)^2 + (cos(a.lat * pi() / 180.0) * (a.lng - b.lng))^2) AS distKm
 WHERE distKm <= 500
 MERGE (a)-[r:NEAR]-(b)
 SET r.distKm = distKm,
@@ -73,7 +73,7 @@ WHERE (b:Satellite OR b:Flight)
   AND abs(a.lat - b.lat) < 5
   AND abs(a.lng - b.lng) < 5
 WITH a, b,
-     111.0 * sqrt((a.lat - b.lat)^2 + (cos(radians(a.lat)) * (a.lng - b.lng))^2) AS distKm
+     111.0 * sqrt((a.lat - b.lat)^2 + (cos(a.lat * pi() / 180.0) * (a.lng - b.lng))^2) AS distKm
 WHERE distKm <= 500
 MERGE (a)-[r:NEAR]-(b)
 SET r.distKm = distKm,
@@ -87,7 +87,7 @@ WHERE (b:Vessel OR b:Flight)
   AND abs(a.lat - b.lat) < 2
   AND abs(a.lng - b.lng) < 2
 WITH a, b,
-     111.0 * sqrt((a.lat - b.lat)^2 + (cos(radians(a.lat)) * (a.lng - b.lng))^2) AS distKm
+     111.0 * sqrt((a.lat - b.lat)^2 + (cos(a.lat * pi() / 180.0) * (a.lng - b.lng))^2) AS distKm
 WHERE distKm <= 100
 MERGE (a)-[r:NEAR]-(b)
 SET r.distKm = distKm,
