@@ -25,6 +25,10 @@ type Config struct {
 
 	JWTSecret      string
 	AllowedOrigins []string
+
+	MemgraphBoltURL  string
+	MemgraphUser     string
+	MemgraphPassword string
 }
 
 // Load reads configuration from environment variables, applying defaults where appropriate.
@@ -48,6 +52,10 @@ func Load() *Config {
 
 		JWTSecret:      os.Getenv("JWT_SECRET"),
 		AllowedOrigins: parseOrigins(getEnv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")),
+
+		MemgraphBoltURL:  getEnv("MEMGRAPH_BOLT_URL", "bolt://localhost:7687"),
+		MemgraphUser:     getEnv("MEMGRAPH_USER", "memgraph"),
+		MemgraphPassword: os.Getenv("MEMGRAPH_PASSWORD"),
 	}
 }
 

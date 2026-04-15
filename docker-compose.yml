@@ -15,5 +15,22 @@ services:
     ports:
       - '6379:6379'
 
+  memgraph:
+    image: memgraph/memgraph-platform:latest
+    ports:
+      - '7687:7687'
+      - '7444:7444'
+    volumes:
+      - memgraph_data:/var/lib/memgraph
+    environment:
+      MEMGRAPH_USER: memgraph
+      MEMGRAPH_PASSWORD: ${MEMGRAPH_PASSWORD:-memgraph}
+    healthcheck:
+      test: ['CMD', 'nc', '-z', 'localhost', '7687']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   timescaledb_data:
+  memgraph_data:

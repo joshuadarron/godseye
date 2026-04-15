@@ -8,6 +8,7 @@ import { lookupRoute } from '../../utils/routeLookup'
 import type { FlightRoute } from '../../utils/routeLookup'
 import { lookupAircraft } from '../../utils/aircraftLookup'
 import type { AircraftMeta } from '../../utils/aircraftLookup'
+import NearbySection from './NearbySection'
 
 const DEFAULT_WIDTH = 360
 
@@ -138,6 +139,8 @@ export default function FlightDetailPanel() {
           />
         </div>
       </div>
+
+      <NearbySection entityId={f.id} />
     </div>
   )
 }

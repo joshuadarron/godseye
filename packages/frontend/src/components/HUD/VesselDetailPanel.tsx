@@ -4,6 +4,7 @@ import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useVesselStore } from '../../stores/vesselStore'
 import { layerRegistry } from '../../registries/layerRegistry'
 import { useDraggablePanel } from '../../hooks/useDraggablePanel'
+import NearbySection from './NearbySection'
 
 const DEFAULT_WIDTH = 360
 
@@ -81,6 +82,8 @@ export default function VesselDetailPanel() {
           <DataField label="Draught" value={v.draught ? `${v.draught.toFixed(1)} m` : '—'} />
         </div>
       </div>
+
+      <NearbySection entityId={v.id} />
     </div>
   )
 }

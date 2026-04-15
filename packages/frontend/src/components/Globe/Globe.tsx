@@ -11,6 +11,7 @@ import {
 } from 'cesium'
 import { Viewer, Globe as CesiumGlobe, Scene, SkyAtmosphere, useCesium } from 'resium'
 import GenericEntityLayer from './GenericEntityLayer'
+import EncounterLayer from './EncounterLayer'
 import { layerRegistry } from '../../registries/layerRegistry'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import { useViewportBounds } from '../../hooks/useViewportBounds'
@@ -208,6 +209,7 @@ export default function Globe() {
         <GenericEntityLayer key={reg.key} registration={reg} />
       ))}
       <SelectedOverlays />
+      <EncounterLayer />
     </Viewer>
   )
 }

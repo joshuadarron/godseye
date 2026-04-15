@@ -4,10 +4,12 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joshuaferrara/godseye/services/api/internal/graph"
 )
 
 // RegisterRoutes adds REST API endpoints to the given mux.
-func RegisterRoutes(mux *http.ServeMux, pool *pgxpool.Pool) {
+// graphClient may be nil if Memgraph is not configured.
+func RegisterRoutes(mux *http.ServeMux, pool *pgxpool.Pool, graphClient *graph.Client) {
 	fh := &flightHandler{pool: pool}
 	mux.HandleFunc("GET /api/flights", fh.list)
 	mux.HandleFunc("GET /api/flights/{id}", fh.history)
@@ -27,4 +29,10 @@ func RegisterRoutes(mux *http.ServeMux, pool *pgxpool.Pool) {
 	ch := &conflictHandler{pool: pool}
 	mux.HandleFunc("GET /api/conflicts", ch.list)
 	mux.HandleFunc("GET /api/conflicts/{id}", ch.history)
+
+	if graphClient != nil {
+		gh := &graphHandler{client: graphClient}
+		mux.HandleFunc("GET /api/graph/nearby", gh.nearby)
+		mux.HandleFunc("GET /api/graph/encounters", gh.encounters)
+	}
 }

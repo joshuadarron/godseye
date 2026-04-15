@@ -16,6 +16,7 @@ import (
 	"github.com/joshuaferrara/godseye/services/api/internal/broadcast"
 	"github.com/joshuaferrara/godseye/services/api/internal/config"
 	"github.com/joshuaferrara/godseye/services/api/internal/db"
+	"github.com/joshuaferrara/godseye/services/api/internal/graph"
 	"github.com/joshuaferrara/godseye/services/api/internal/ingestion"
 	"github.com/joshuaferrara/godseye/services/api/internal/middleware"
 	"github.com/joshuaferrara/godseye/services/api/internal/ws"
@@ -63,6 +64,29 @@ func main() {
 	}
 	slog.Info("connected to redis")
 
+	// Connect to Memgraph (optional — server runs without it).
+	var graphClient *graph.Client
+	if cfg.MemgraphBoltURL != "" {
+		gc, err := graph.NewClient(cfg.MemgraphBoltURL, cfg.MemgraphUser, cfg.MemgraphPassword)
+		if err != nil {
+			slog.Warn("failed to create graph client", "error", err)
+		} else if err := gc.VerifyConnectivity(ctx); err != nil {
+			slog.Warn("memgraph not reachable, graph layer disabled", "error", err)
+			gc.Close(ctx)
+		} else {
+			graphClient = gc
+			defer graphClient.Close(ctx)
+
+			if err := graphClient.InitSchema(ctx); err != nil {
+				slog.Warn("graph schema init failed", "error", err)
+			}
+			slog.Info("connected to memgraph")
+
+			graphWorker := graph.NewWorker(graphClient, rdb, graph.DefaultProximityConfig, slog.Default())
+			go graphWorker.Run(ctx)
+		}
+	}
+
 	// Set up broadcaster.
 	broadcaster := broadcast.NewBroadcaster(rdb)
 	go func() {
@@ -89,7 +113,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
-	api.RegisterRoutes(mux, pool)
+	api.RegisterRoutes(mux, pool, graphClient)
 
 	handler := middleware.Chain(
 		middleware.RequestID,

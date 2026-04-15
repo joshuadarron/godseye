@@ -12,6 +12,7 @@ import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useSatelliteStore } from '../../stores/satelliteStore'
 import { layerRegistry } from '../../registries/layerRegistry'
 import { useDraggablePanel } from '../../hooks/useDraggablePanel'
+import NearbySection from './NearbySection'
 
 const DEFAULT_WIDTH = 360
 
@@ -115,6 +116,8 @@ export default function SatelliteDetailPanel() {
           <DataField label="Velocity" value={`${displayVel.toFixed(2)} km/s`} />
         </div>
       </div>
+
+      <NearbySection entityId={sat.id} />
     </div>
   )
 }

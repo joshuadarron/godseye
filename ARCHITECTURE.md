@@ -28,13 +28,18 @@ graph TB
       Fanout["Fan-out to clients"]
     end
 
+    subgraph GraphLayer["Graph Layer"]
+      GW["GraphWorker<br/><i>Redis → Memgraph</i>"]
+    end
+
     WS["WebSocket Server<br/><i>GET /ws</i>"]
-    API["REST API<br/><i>/api/flights · /api/satellites</i>"]
+    API["REST API<br/><i>/api/flights · /api/satellites<br/>/api/graph/nearby · /api/graph/encounters</i>"]
   end
 
   subgraph Infra["Infrastructure · Docker Compose"]
     Redis[("Redis<br/><i>Pub/Sub · :6379</i>")]
     TSDB[("TimescaleDB + PostGIS<br/><i>:5432</i>")]
+    Memgraph[("Memgraph<br/><i>Graph DB · :7687</i>")]
   end
 
   subgraph React["React Frontend · :5173"]
@@ -54,6 +59,7 @@ graph TB
       GEL["GenericEntityLayer"]
       ML["ModelLayer<br/><i>BillboardCollection</i>"]
       SPL["SatellitePropagationLayer<br/><i>client-side SGP4</i>"]
+      EL["EncounterLayer<br/><i>PolylineCollection</i>"]
 
       subgraph Overlays["Selection Overlays"]
         FTO["FlightTrajectoryOverlay<br/><i>great-circle arc</i>"]
@@ -65,6 +71,8 @@ graph TB
     subgraph HUD["HUD Panels"]
       FDP["FlightDetailPanel"]
       SDP["SatelliteDetailPanel"]
+      VDP["VesselDetailPanel"]
+      NS["NearbySection<br/><i>graph proximity</i>"]
       FTT["FlightTooltip"]
       STT["SatelliteTooltip"]
       Sidebar["Sidebar<br/><i>layer toggles</i>"]
@@ -92,8 +100,13 @@ graph TB
   RedisSub --> Fanout
   Fanout --> WS
 
-  %% REST API → DB
+  %% Redis → GraphWorker → Memgraph
+  Redis -- "subscribe 3 channels" --> GW
+  GW -- "MERGE nodes + NEAR edges" --> Memgraph
+
+  %% REST API → DB & Graph
   API --> TSDB
+  API -- "proximity queries" --> Memgraph
 
   %% WebSocket → Frontend
   WS -- "JSON DeltaMessage" --> WSHook
@@ -118,6 +131,14 @@ graph TB
   FR -. "on hover" .-> FTT
   SR -. "on select" .-> SDP
   SR -. "on hover" .-> STT
+
+  %% NearbySection in detail panels
+  FDP --> NS
+  SDP --> NS
+  VDP --> NS
+
+  %% EncounterLayer polls graph API
+  EL -. "GET /api/graph/encounters<br/>every 5s" .-> API
 
   classDef planned fill:#1a1a2e,stroke:#555,stroke-dasharray:5 5,color:#888
 ```
@@ -237,6 +258,7 @@ graph TD
 
   ML["ModelLayer<br/><i>BillboardCollection</i>"]
   SPL["SatellitePropagationLayer<br/><i>SGP4 per-frame</i>"]
+  EL2["EncounterLayer<br/><i>PolylineCollection</i>"]
 
   SelOverlays["SelectedOverlays"]
   FTO["FlightTrajectoryOverlay"]
@@ -248,15 +270,18 @@ graph TD
   SubtypeToggle["SubtypeToggle"]
   EntityCounter["EntityCounter"]
 
-  FDP["FlightDetailPanel"]
-  SDP["SatelliteDetailPanel"]
+  FDP2["FlightDetailPanel"]
+  SDP2["SatelliteDetailPanel"]
+  VDP2["VesselDetailPanel"]
+  NS2["NearbySection"]
   FTT["FlightTooltip"]
   STT["SatelliteTooltip"]
 
   App --> Globe
   App --> Sidebar
-  App --> FDP
-  App --> SDP
+  App --> FDP2
+  App --> SDP2
+  App --> VDP2
   App --> FTT
   App --> STT
 
@@ -266,6 +291,7 @@ graph TD
   Viewer --> PickHandler
   Viewer --> GEL_F
   Viewer --> GEL_S
+  Viewer --> EL2
   Viewer --> SelOverlays
 
   GEL_F --> ML
@@ -274,6 +300,10 @@ graph TD
   SelOverlays --> FTO
   SelOverlays --> SOO
   SelOverlays --> SFO
+
+  FDP2 --> NS2
+  SDP2 --> NS2
+  VDP2 --> NS2
 
   Sidebar --> LayerGroup
   LayerGroup --> SubtypeToggle
@@ -304,12 +334,59 @@ graph LR
   CT -.-> BC
   CE -.-> BC
 
+  CF --> GW2["GraphWorker"]
+  CS --> GW2
+  CV -.-> GW2
+
   BC --> C1["Client 1"]
   BC --> C2["Client 2"]
   BC --> CN["Client N"]
+  GW2 --> MG[("Memgraph")]
 
   classDef planned fill:#1a1a2e,stroke:#555,stroke-dasharray:5 5,color:#888
 ```
+
+## Graph Schema (Memgraph)
+
+```mermaid
+graph LR
+  subgraph Nodes["Node Labels"]
+    F["Flight<br/><i>id, lat, lng, heading, altitude, updatedAt</i>"]
+    S["Satellite<br/><i>id, lat, lng, heading, altitude, updatedAt</i>"]
+    V["Vessel<br/><i>id, lat, lng, heading, altitude, updatedAt</i>"]
+    Z["Zone<br/><i>id (future)</i>"]:::planned
+  end
+
+  subgraph Edges["Edge Types"]
+    NEAR["NEAR<br/><i>distKm, updatedAt</i>"]
+    WITHIN["WITHIN<br/><i>since (future)</i>"]:::planned
+  end
+
+  F ---|NEAR| F
+  F ---|NEAR| V
+  F ---|NEAR| S
+  S ---|NEAR| S
+  V ---|NEAR| V
+
+  classDef planned fill:#1a1a2e,stroke:#555,stroke-dasharray:5 5,color:#888
+```
+
+### Proximity Thresholds
+
+| Entity Pair           | Threshold |
+| --------------------- | --------- |
+| Flight ↔ Flight       | 50 km     |
+| Flight ↔ Vessel       | 100 km    |
+| Flight ↔ Satellite    | 500 km    |
+| Satellite ↔ Satellite | 200 km    |
+| Vessel ↔ Vessel       | 50 km     |
+
+### Graph API Endpoints
+
+| Endpoint                                                        | Description                                    |
+| --------------------------------------------------------------- | ---------------------------------------------- |
+| `GET /api/graph/nearby?id={entityId}&hops={1-3}`                | Entities within N hops via NEAR edges (max 50) |
+| `GET /api/graph/encounters?type={flights\|satellites\|vessels}` | All active NEAR edges, optional type filter    |
 
 ---
 
