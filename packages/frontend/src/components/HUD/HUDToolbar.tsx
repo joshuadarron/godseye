@@ -60,6 +60,7 @@ export default function HUDToolbar() {
                   layerKey={activeLayer.key}
                   subtypes={activeLayer.subtypes}
                   subtypeIcons={activeLayer.subtypeIcons}
+                  subtypeColors={activeLayer.subtypeColors}
                   columnCount={LAYERS.length}
                 />
               </div>

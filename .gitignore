@@ -16,6 +16,11 @@ dist/
 dist-ssr/
 *.local
 
+# Generated aircraft databases (large, built from OpenSky data via scripts/build-aircraft-db.mjs)
+packages/frontend/public/data/aircraft.json
+packages/frontend/public/data/aircraft-detail.json
+scripts/.*.tmp
+
 # Logs
 logs/
 *.log

@@ -1,17 +1,28 @@
 import { memo } from 'react'
+import type { Color } from 'cesium'
 import { useLayerVisibilityStore, type SublayerMap } from '../../stores/layerVisibilityStore'
 
 interface SubFilterPopoverProps {
   layerKey: string
   subtypes: Record<string, string>
   subtypeIcons?: Record<string, string>
+  subtypeColors?: Record<string, Color>
   columnCount: number
+}
+
+/** Convert a Cesium Color to a CSS rgba string. */
+function cesiumColorToCSS(c: Color, alpha?: number): string {
+  const r = Math.round(c.red * 255)
+  const g = Math.round(c.green * 255)
+  const b = Math.round(c.blue * 255)
+  return `rgba(${r},${g},${b},${alpha ?? c.alpha})`
 }
 
 export default memo(function SubFilterPopover({
   layerKey,
   subtypes,
   subtypeIcons,
+  subtypeColors,
   columnCount,
 }: SubFilterPopoverProps) {
   const sublayerMap = useLayerVisibilityStore((s) => s.sublayers[layerKey]) as
@@ -56,27 +67,38 @@ export default memo(function SubFilterPopover({
         {entries.map(([subKey, subLabel]) => {
           const active = sublayerMap?.[subKey] ?? true
           const iconUrl = subtypeIcons?.[subKey]
+          const color = subtypeColors?.[subKey]
+          const colorCSS = color ? cesiumColorToCSS(color, 1) : undefined
+
           return (
             <button
               key={subKey}
               onClick={() => toggleSublayer(layerKey, subKey)}
               aria-pressed={active}
-              className={`flex h-20 w-20 cursor-pointer flex-col items-center justify-center text-xs font-medium transition-colors select-none ${
+              className={`relative flex h-20 w-20 cursor-pointer flex-col items-center justify-center text-xs font-medium transition-colors select-none ${
                 active
                   ? 'bg-white/10 text-white'
                   : 'text-white/40 hover:bg-white/5 hover:text-white/60'
               }`}
             >
               {iconUrl ? (
-                <img
-                  src={iconUrl}
-                  alt={subLabel}
-                  className={`h-7 w-7 shrink-0 ${active ? 'opacity-100' : 'opacity-40'}`}
-                />
+                <div className="relative flex h-7 w-7 shrink-0 items-center justify-center">
+                  <img
+                    src={iconUrl}
+                    alt={subLabel}
+                    className={`h-7 w-7 drop-shadow-[0_0_3px_rgba(255,255,255,0.3)] transition-opacity ${active ? 'opacity-100' : 'opacity-30'}`}
+                  />
+                </div>
               ) : (
                 <div className="h-7 w-7" />
               )}
               <span className="mt-1">{subLabel}</span>
+              {colorCSS && (
+                <span
+                  className={`absolute bottom-1 h-0.5 w-6 rounded-full transition-opacity ${active ? 'opacity-80' : 'opacity-20'}`}
+                  style={{ backgroundColor: colorCSS }}
+                />
+              )}
             </button>
           )
         })}

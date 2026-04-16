@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { createElement } from 'react'
+import type { Color } from 'cesium'
 import { layerRegistry } from '../../registries/layerRegistry'
 
 // Import registrations so the registry is populated.
@@ -15,6 +16,7 @@ export interface LayerConfig {
   icon: ReactNode
   subtypes?: Record<string, string>
   subtypeIcons?: Record<string, string>
+  subtypeColors?: Record<string, Color>
 }
 
 const ICON_CLASS = 'w-7 h-7 shrink-0 fill-current'
@@ -60,6 +62,7 @@ export function buildLayerConfigs(): LayerConfig[] {
       icon: reg.icon,
       subtypes: reg.subtypes,
       subtypeIcons: reg.subtypeIcons,
+      subtypeColors: reg.subtypeColors,
     })
   }
 

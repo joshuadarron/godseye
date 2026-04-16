@@ -83,7 +83,13 @@ export default function FlightDetailPanel() {
         className="flex shrink-0 cursor-grab items-center justify-between border-b border-white/[0.08] bg-black/40 px-4 py-2.5 backdrop-blur-md select-none active:cursor-grabbing"
       >
         <div className="flex min-w-0 items-center gap-2">
-          {entityIcon && <img src={entityIcon} alt="" className="h-5 w-5 opacity-60" />}
+          {entityIcon && (
+            <img
+              src={entityIcon}
+              alt=""
+              className="h-5 w-5 drop-shadow-[0_0_3px_rgba(255,255,255,0.3)]"
+            />
+          )}
           <h2 className="truncate text-[11px] font-semibold tracking-widest text-white/40 uppercase">
             {f.callsign || f.id}
           </h2>

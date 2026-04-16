@@ -592,13 +592,11 @@ export async function initAircraftClassifier(): Promise<void> {
  */
 export function classifyAircraftIcon(icao24: string, category: number): AircraftIconType {
   const hex = icao24?.toLowerCase()
-  const aircraftDb = getAircraftDb()
+  const typeDb = getAircraftDb()
 
-  if (hex && aircraftDb) {
-    const meta = aircraftDb.get(hex)
-    if (meta?.type) {
-      const typeCode = meta.type.toUpperCase()
-
+  if (hex && typeDb) {
+    const typeCode = typeDb.get(hex)?.toUpperCase()
+    if (typeCode) {
       // Tier 1: exact type designator match
       const t1 = TYPE_DESIGNATOR_ICONS[typeCode]
       if (t1) return t1

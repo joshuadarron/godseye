@@ -1,46 +1,73 @@
 export interface AircraftMeta {
-  reg: string
   type: string
-  model: string
-  mfr: string
-  op: string
-  owner: string
+  reg?: string
+  model?: string
+  mfr?: string
+  op?: string
+  owner?: string
 }
 
-type AircraftMap = Map<string, AircraftMeta>
+// ---------------------------------------------------------------------------
+// Slim type map — {icao24: "TYPECODE"} — used by aircraftClassifier for icons.
+// Small enough to keep in memory (~7MB).
+// ---------------------------------------------------------------------------
 
-let aircraftPromise: Promise<AircraftMap> | null = null
-let aircraftMap: AircraftMap | null = null
+type TypeMap = Map<string, string>
 
-async function loadAircraft(): Promise<AircraftMap> {
+let typePromise: Promise<TypeMap> | null = null
+let typeMap: TypeMap | null = null
+
+async function loadTypes(): Promise<TypeMap> {
   const res = await fetch('/data/aircraft.json')
-  const data: Record<string, AircraftMeta> = await res.json()
-  aircraftMap = new Map(Object.entries(data))
-  return aircraftMap
+  const data: Record<string, string> = await res.json()
+  typeMap = new Map(Object.entries(data))
+  return typeMap
 }
 
-function getAircraft(): Promise<AircraftMap> {
-  if (!aircraftPromise) aircraftPromise = loadAircraft()
-  return aircraftPromise
+function getTypes(): Promise<TypeMap> {
+  if (!typePromise) typePromise = loadTypes()
+  return typePromise
 }
 
-/** Synchronous access to the aircraft DB (null until loaded). */
-export function getAircraftDb(): AircraftMap | null {
-  return aircraftMap
+/** Synchronous access to the type map (null until loaded). Used by classifier. */
+export function getAircraftDb(): TypeMap | null {
+  return typeMap
 }
 
-/** Eagerly start loading the aircraft DB. */
+/** Eagerly start loading the type map. */
 export function initAircraftDb(): void {
-  getAircraft()
+  getTypes()
+}
+
+// ---------------------------------------------------------------------------
+// Full detail map — {icao24: AircraftMeta} — lazy-loaded for detail panel.
+// Larger file, only fetched when user selects an aircraft.
+// ---------------------------------------------------------------------------
+
+type DetailMap = Map<string, AircraftMeta>
+
+let detailPromise: Promise<DetailMap> | null = null
+let detailMap: DetailMap | null = null
+
+async function loadDetail(): Promise<DetailMap> {
+  const res = await fetch('/data/aircraft-detail.json')
+  const data: Record<string, AircraftMeta> = await res.json()
+  detailMap = new Map(Object.entries(data))
+  return detailMap
+}
+
+function getDetail(): Promise<DetailMap> {
+  if (!detailPromise) detailPromise = loadDetail()
+  return detailPromise
 }
 
 /**
  * Look up aircraft metadata by icao24 hex address.
- * Lazy-loads the aircraft database on first call.
+ * Lazy-loads the full detail database on first call.
  * Returns null if no metadata is available.
  */
 export async function lookupAircraft(icao24: string): Promise<AircraftMeta | null> {
   if (!icao24) return null
-  const aircraft = await getAircraft()
-  return aircraft.get(icao24.toLowerCase()) ?? null
+  const detail = await getDetail()
+  return detail.get(icao24.toLowerCase()) ?? null
 }
