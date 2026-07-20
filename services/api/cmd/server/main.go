@@ -106,14 +106,14 @@ func main() {
 
 	// Set up HTTP routes.
 	mux := http.NewServeMux()
+	// The tracking layers and the WebSocket feed are public; authentication gates
+	// per-user routes only. See api.RegisterRoutes for the access model.
 	mux.HandleFunc("/ws", ws.Handler(broadcaster, cfg.JWTSecret, cfg.AllowedOrigins))
-	// TODO: To protect routes with auth, wrap handlers with middleware.Auth(cfg.JWTSecret):
-	//   mux.Handle("GET /api/protected", middleware.Auth(cfg.JWTSecret)(protectedHandler))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
-	api.RegisterRoutes(mux, pool, graphClient)
+	api.RegisterRoutes(mux, pool, graphClient, cfg.JWTSecret)
 
 	handler := middleware.Chain(
 		middleware.RequestID,
