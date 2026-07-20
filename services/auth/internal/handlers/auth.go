@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"regexp"
@@ -230,34 +232,46 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"user": user})
 }
 
-// issueTokens generates and returns access + refresh tokens for the user.
-func (h *AuthHandler) issueTokens(w http.ResponseWriter, r *http.Request, user *repository.User) {
-	accessToken, err := authjwt.GenerateAccessToken(h.cfg.JWTSecret, h.cfg.AccessTokenTTL, user.ID, user.Email, user.Name)
+// issueTokenPair mints an access token plus a stored refresh token for the user.
+// Shared by the password endpoints and the OAuth code exchange.
+func issueTokenPair(
+	ctx context.Context,
+	cfg *config.Config,
+	tokenRepo *repository.TokenRepo,
+	user *repository.User,
+) (*authResponse, error) {
+	accessToken, err := authjwt.GenerateAccessToken(cfg.JWTSecret, cfg.AccessTokenTTL, user.ID, user.Email, user.Name)
 	if err != nil {
-		slog.Error("issue tokens: generate access token", "error", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
-		return
+		return nil, fmt.Errorf("generate access token: %w", err)
 	}
 
 	rawRefresh, hashRefresh, err := authjwt.GenerateRefreshToken()
 	if err != nil {
-		slog.Error("issue tokens: generate refresh token", "error", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
-		return
+		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
 
-	expiresAt := time.Now().Add(h.cfg.RefreshTokenTTL)
-	if err := h.tokenRepo.StoreRefreshToken(r.Context(), user.ID, hashRefresh, expiresAt); err != nil {
-		slog.Error("issue tokens: store refresh token", "error", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
-		return
+	expiresAt := time.Now().Add(cfg.RefreshTokenTTL)
+	if err := tokenRepo.StoreRefreshToken(ctx, user.ID, hashRefresh, expiresAt); err != nil {
+		return nil, fmt.Errorf("store refresh token: %w", err)
 	}
 
-	writeJSON(w, http.StatusOK, authResponse{
+	return &authResponse{
 		AccessToken:  accessToken,
 		RefreshToken: rawRefresh,
 		User:         user,
-	})
+	}, nil
+}
+
+// issueTokens generates and returns access + refresh tokens for the user.
+func (h *AuthHandler) issueTokens(w http.ResponseWriter, r *http.Request, user *repository.User) {
+	resp, err := issueTokenPair(r.Context(), h.cfg, h.tokenRepo, user)
+	if err != nil {
+		slog.Error("issue tokens", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

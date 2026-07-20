@@ -18,22 +18,34 @@ import (
 	"github.com/joshuaferrara/godseye/services/auth/internal/repository"
 )
 
+// authCodeTTL bounds how long the frontend has to redeem an authorization code.
+// The redemption happens immediately on page load, so this only needs to cover
+// the redirect round-trip.
+const authCodeTTL = 60 * time.Second
+
 // OAuthHandler handles OAuth2 login flows.
 type OAuthHandler struct {
 	cfg       *config.Config
 	userRepo  *repository.UserRepo
 	tokenRepo *repository.TokenRepo
+	codeRepo  *repository.OAuthCodeRepo
 
 	githubCfg *oauth2.Config
 	googleCfg *oauth2.Config
 }
 
 // NewOAuthHandler creates a new OAuthHandler.
-func NewOAuthHandler(cfg *config.Config, userRepo *repository.UserRepo, tokenRepo *repository.TokenRepo) *OAuthHandler {
+func NewOAuthHandler(
+	cfg *config.Config,
+	userRepo *repository.UserRepo,
+	tokenRepo *repository.TokenRepo,
+	codeRepo *repository.OAuthCodeRepo,
+) *OAuthHandler {
 	h := &OAuthHandler{
 		cfg:       cfg,
 		userRepo:  userRepo,
 		tokenRepo: tokenRepo,
+		codeRepo:  codeRepo,
 	}
 
 	if cfg.GithubClientID != "" {
@@ -109,7 +121,7 @@ func (h *OAuthHandler) GithubCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.redirectWithTokens(w, r, user)
+	h.redirectWithCode(w, r, user)
 }
 
 // GoogleLogin handles GET /auth/google — redirects to Google authorization.
@@ -162,40 +174,79 @@ func (h *OAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.redirectWithTokens(w, r, user)
+	h.redirectWithCode(w, r, user)
 }
 
-// redirectWithTokens issues tokens and redirects to the frontend callback URL.
-func (h *OAuthHandler) redirectWithTokens(w http.ResponseWriter, r *http.Request, user *repository.User) {
-	accessToken, err := authjwt.GenerateAccessToken(h.cfg.JWTSecret, h.cfg.AccessTokenTTL, user.ID, user.Email, user.Name)
+// redirectWithCode issues a short-lived, single-use authorization code and
+// redirects to the frontend callback URL carrying only that code. Tokens are
+// never placed in the URL — they would otherwise land in browser history,
+// referrer headers, and proxy/server access logs.
+func (h *OAuthHandler) redirectWithCode(w http.ResponseWriter, r *http.Request, user *repository.User) {
+	rawCode, codeHash, err := authjwt.GenerateAuthorizationCode()
 	if err != nil {
-		slog.Error("oauth: generate access token", "error", err)
+		slog.Error("oauth: generate authorization code", "error", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	rawRefresh, hashRefresh, err := authjwt.GenerateRefreshToken()
-	if err != nil {
-		slog.Error("oauth: generate refresh token", "error", err)
+	if err := h.codeRepo.StoreCode(r.Context(), codeHash, user.ID, time.Now().Add(authCodeTTL)); err != nil {
+		slog.Error("oauth: store authorization code", "error", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	expiresAt := time.Now().Add(h.cfg.RefreshTokenTTL)
-	if err := h.tokenRepo.StoreRefreshToken(r.Context(), user.ID, hashRefresh, expiresAt); err != nil {
-		slog.Error("oauth: store refresh token", "error", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	// SECURITY: Tokens in redirect URL query params are visible in browser history and server logs.
-	// TODO: Switch to a short-lived authorization code exchange pattern in production.
-	redirectURL := fmt.Sprintf("%s/auth/callback?access_token=%s&refresh_token=%s",
-		h.cfg.FrontendURL,
-		url.QueryEscape(accessToken),
-		url.QueryEscape(rawRefresh),
-	)
+	redirectURL := fmt.Sprintf("%s/auth/callback?code=%s", h.cfg.FrontendURL, url.QueryEscape(rawCode))
 	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+}
+
+type exchangeRequest struct {
+	Code string `json:"code"`
+}
+
+// Exchange handles POST /auth/oauth/exchange — redeems a single-use
+// authorization code for an access + refresh token pair.
+func (h *OAuthHandler) Exchange(w http.ResponseWriter, r *http.Request) {
+	var req exchangeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
+
+	if req.Code == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "code is required"})
+		return
+	}
+
+	userID, err := h.codeRepo.ConsumeCode(r.Context(), authjwt.HashToken(req.Code))
+	if err != nil {
+		slog.Error("oauth exchange: consume code", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+		return
+	}
+	if userID == "" {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid or expired code"})
+		return
+	}
+
+	user, err := h.userRepo.GetUserByID(r.Context(), userID)
+	if err != nil {
+		slog.Error("oauth exchange: get user", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+		return
+	}
+	if user == nil {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "user not found"})
+		return
+	}
+
+	resp, err := issueTokenPair(r.Context(), h.cfg, h.tokenRepo, user)
+	if err != nil {
+		slog.Error("oauth exchange: issue tokens", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
 
 type oauthProfile struct {

@@ -56,9 +56,9 @@ func ValidateAccessToken(secret, tokenStr string) (*UserClaims, error) {
 	return claims, nil
 }
 
-// GenerateRefreshToken returns a random hex token and its SHA-256 hash.
-// The raw token is sent to the client; the hash is stored in the database.
-func GenerateRefreshToken() (raw string, hash string, err error) {
+// GenerateOpaqueToken returns a 256-bit random hex token and its SHA-256 hash.
+// The raw token is sent to the client; only the hash is stored in the database.
+func GenerateOpaqueToken() (raw string, hash string, err error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return "", "", fmt.Errorf("generate random bytes: %w", err)
@@ -68,6 +68,17 @@ func GenerateRefreshToken() (raw string, hash string, err error) {
 	h := sha256.Sum256([]byte(raw))
 	hash = hex.EncodeToString(h[:])
 	return raw, hash, nil
+}
+
+// GenerateRefreshToken returns a raw refresh token and its hash for storage.
+func GenerateRefreshToken() (raw string, hash string, err error) {
+	return GenerateOpaqueToken()
+}
+
+// GenerateAuthorizationCode returns a raw single-use OAuth authorization code
+// and its hash for storage.
+func GenerateAuthorizationCode() (raw string, hash string, err error) {
+	return GenerateOpaqueToken()
 }
 
 // HashToken returns the SHA-256 hex hash of a raw token string.

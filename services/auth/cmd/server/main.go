@@ -54,10 +54,14 @@ func main() {
 	// Set up repositories.
 	userRepo := repository.NewUserRepo(pool)
 	tokenRepo := repository.NewTokenRepo(pool)
+	codeRepo := repository.NewOAuthCodeRepo(pool)
+
+	// Purge unredeemed authorization codes periodically.
+	go purgeExpiredCodes(ctx, codeRepo)
 
 	// Set up handlers.
 	authHandler := handlers.NewAuthHandler(cfg, userRepo, tokenRepo)
-	oauthHandler := handlers.NewOAuthHandler(cfg, userRepo, tokenRepo)
+	oauthHandler := handlers.NewOAuthHandler(cfg, userRepo, tokenRepo, codeRepo)
 
 	// Set up HTTP routes.
 	mux := http.NewServeMux()
@@ -100,4 +104,22 @@ func main() {
 	}
 
 	slog.Info("server stopped")
+}
+
+// purgeExpiredCodes deletes unredeemed OAuth authorization codes on an interval.
+// Redeemed codes are removed on consumption; this only sweeps abandoned flows.
+func purgeExpiredCodes(ctx context.Context, codeRepo *repository.OAuthCodeRepo) {
+	ticker := time.NewTicker(10 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := codeRepo.DeleteExpiredCodes(ctx); err != nil {
+				slog.Warn("purge expired oauth codes", "error", err)
+			}
+		}
+	}
 }

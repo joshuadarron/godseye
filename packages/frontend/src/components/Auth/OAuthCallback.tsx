@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
-import { getMe } from '../../api/auth'
+import { exchangeOAuthCode } from '../../api/auth'
 import { useAuthStore } from '../../stores/authStore'
 
 /**
- * Reads access_token and refresh_token from URL query params after an OAuth redirect,
- * fetches the user profile, and stores the auth state.
+ * Reads the single-use authorization code from the OAuth redirect, exchanges it
+ * for a token pair, and stores the auth state. Tokens never appear in the URL —
+ * only the code does, and it is consumed server-side on first use.
  */
 export default function OAuthCallback() {
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -15,39 +16,20 @@ export default function OAuthCallback() {
     processed.current = true
 
     const params = new URLSearchParams(window.location.search)
-    const accessToken = params.get('access_token')
-    const refreshToken = params.get('refresh_token')
+    const code = params.get('code')
 
-    if (!accessToken || !refreshToken) return
-
-    // Clean the URL so tokens aren't visible in the address bar.
+    // Clean the URL before the network call so a reload can't retry a spent code.
     window.history.replaceState({}, '', '/')
 
-    getMe(accessToken)
-      .then(({ user }) => {
+    if (!code) return
+
+    exchangeOAuthCode(code)
+      .then(({ user, accessToken, refreshToken }) => {
         setAuth(user, accessToken, refreshToken)
       })
       .catch(() => {
-        // If fetching user fails, still store the tokens — the user info
-        // can be decoded from the JWT as a fallback.
-        try {
-          const payload = JSON.parse(atob(accessToken.split('.')[1]))
-          setAuth(
-            {
-              id: payload.uid,
-              email: payload.email,
-              name: payload.name,
-              avatarUrl: '',
-              provider: '',
-              createdAt: '',
-              updatedAt: '',
-            },
-            accessToken,
-            refreshToken,
-          )
-        } catch {
-          // Token is malformed — ignore.
-        }
+        // Code was already used, expired, or the auth service is down — the user
+        // stays signed out and can retry from the sign-in button.
       })
   }, [setAuth])
 
