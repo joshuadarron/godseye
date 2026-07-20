@@ -28,7 +28,7 @@ type Config struct {
 // Load reads configuration from environment variables, applying defaults where appropriate.
 func Load() *Config {
 	return &Config{
-		DatabaseURL:     getEnv("DATABASE_URL", "postgres://godseye:godseye@localhost:5433/globaltracker?sslmode=disable"),
+		DatabaseURL:     getEnv("DATABASE_URL", "postgres://godseye:godseye@localhost:5432/globaltracker?sslmode=disable"),
 		ServerAddr:      getEnv("AUTH_SERVER_ADDR", ":8081"),
 		JWTSecret:       os.Getenv("JWT_SECRET"),
 		AccessTokenTTL:  parseDuration("ACCESS_TOKEN_TTL", 15*time.Minute),
