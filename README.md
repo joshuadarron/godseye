@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/go-1.22+-00ADD8?logo=go&logoColor=white" alt="Go" />
+  <img src="https://img.shields.io/badge/go-1.25+-00ADD8?logo=go&logoColor=white" alt="Go" />
   <img src="https://img.shields.io/badge/react-18-61DAFB?logo=react&logoColor=white" alt="React" />
   <img src="https://img.shields.io/badge/cesium-3D_globe-4285F4?logo=cesium&logoColor=white" alt="CesiumJS" />
   <img src="https://img.shields.io/badge/timescaledb-time_series-FDB515?logo=timescale&logoColor=white" alt="TimescaleDB" />
@@ -59,10 +59,11 @@ Open **http://localhost:5173** — you should see a 3D globe with live flights a
 
 ## Prerequisites
 
-- [Go](https://go.dev/) 1.22+
+- [Go](https://go.dev/) 1.25+
 - [Node.js](https://nodejs.org/) 18+ and [pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) and Docker Compose
-- [Memgraph](https://memgraph.com/) (graph database for proximity detection)
+
+[Memgraph](https://memgraph.com/) powers proximity detection and is started by Docker Compose — no separate install needed. The API service runs without it (the graph layer is simply disabled).
 
 ---
 
@@ -88,38 +89,75 @@ This spins up:
 
 - **TimescaleDB** (PostgreSQL + time-series) on port `5432`
 - **Redis** (cache + pub/sub) on port `6379`
+- **Memgraph** (graph database, Bolt) on port `7687`
 
 ### Environment Variables
 
-Copy and fill in your `.env` at project root:
+There is no root `.env` — each service reads its own. Copy the `.env.example` next to it and fill in the values:
 
-```env
-# Backend
-DATABASE_URL=postgres://user:pass@localhost:5432/globaltracker
-REDIS_URL=redis://localhost:6379
-OPENSKY_USERNAME=
-OPENSKY_PASSWORD=
-AISHUB_USERNAME=
-ACLED_API_KEY=
-TICKETMASTER_API_KEY=
-PREDICTHQ_API_KEY=
-OPENWEATHER_API_KEY=
-
-# Frontend
-VITE_WS_URL=ws://localhost:8080/ws
-VITE_CESIUM_ION_TOKEN=
+```bash
+cp services/api/.env.example services/api/.env
+cp services/auth/.env.example services/auth/.env
+cp packages/frontend/.env.example packages/frontend/.env
 ```
 
-Most data source keys are optional for local dev. `DATABASE_URL`, `REDIS_URL`, and `VITE_CESIUM_ION_TOKEN` are required for core functionality.
+**`services/api/.env`** — data ingestion + WebSocket server:
+
+```env
+DATABASE_URL=postgres://godseye:godseye@localhost:5432/globaltracker?sslmode=disable
+REDIS_URL=redis://localhost:6379
+SERVER_ADDR=:8080
+JWT_SECRET=                # must match the auth service
+OPENSKY_CLIENT_ID=         # https://opensky-network.org/
+OPENSKY_CLIENT_SECRET=
+AISSTREAM_API_KEY=         # https://aisstream.io/
+ACLED_API_KEY=             # https://acleddata.com/
+ACLED_EMAIL=
+MEMGRAPH_BOLT_URL=bolt://localhost:7687
+ALLOWED_ORIGINS=http://localhost:5173
+```
+
+**`services/auth/.env`** — JWT + OAuth:
+
+```env
+DATABASE_URL=postgres://godseye:godseye@localhost:5432/globaltracker?sslmode=disable
+AUTH_SERVER_ADDR=:8081
+JWT_SECRET=                # must match the API service
+FRONTEND_URL=http://localhost:5173
+OAUTH_BASE_URL=http://localhost:8081
+GITHUB_CLIENT_ID=          # optional
+GITHUB_CLIENT_SECRET=
+GOOGLE_CLIENT_ID=          # optional
+GOOGLE_CLIENT_SECRET=
+```
+
+**`packages/frontend/.env`**:
+
+```env
+VITE_WS_URL=ws://localhost:8080/ws
+VITE_AUTH_URL=http://localhost:8081
+VITE_CESIUM_ION_TOKEN=     # https://ion.cesium.com/
+```
+
+Required for core functionality: `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET` (shared by both Go services), and `VITE_CESIUM_ION_TOKEN`. Data source keys are optional — a layer without its key stays empty. OAuth client IDs are optional; email/password sign-in works without them.
+
+Generate a secret with:
+
+```bash
+openssl rand -hex 32
+```
 
 ### Running the Backend
 
 ```bash
-cd services/api
-go run cmd/server/main.go
+# API + WebSocket server (terminal 1)
+cd services/api && go run ./cmd/server
+
+# Auth service (terminal 2)
+cd services/auth && go run ./cmd/server
 ```
 
-WebSocket server starts on `localhost:8080`.
+API + WebSocket server starts on `localhost:8080`; auth service on `localhost:8081`. Both run their own migrations against the shared database on startup.
 
 ### Running the Frontend
 
@@ -133,11 +171,11 @@ Vite dev server starts on `localhost:5173`.
 ### Running Tests
 
 ```bash
-# Go tests
-cd services/api && go test ./...
+# Go tests (all services)
+go test ./services/...
 
 # Frontend tests
-cd packages/frontend && pnpm test
+pnpm test
 ```
 
 ---

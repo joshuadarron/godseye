@@ -160,20 +160,36 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 
 ## Environment Variables
 
-```env
-# Backend
-DATABASE_URL=postgres://user:pass@localhost:5432/globaltracker
-REDIS_URL=redis://localhost:6379
-OPENSKY_USERNAME=
-OPENSKY_PASSWORD=
-AISHUB_USERNAME=
-ACLED_API_KEY=
-TICKETMASTER_API_KEY=
-PREDICTHQ_API_KEY=
-OPENWEATHER_API_KEY=
+No root `.env` — each service reads its own, seeded from the `.env.example` beside it. Canonical values live in those files; see README for the annotated list.
 
-# Frontend
+```env
+# services/api/.env
+DATABASE_URL=postgres://godseye:godseye@localhost:5432/globaltracker?sslmode=disable
+REDIS_URL=redis://localhost:6379
+SERVER_ADDR=:8080
+JWT_SECRET=                       # must match services/auth
+OPENSKY_CLIENT_ID=
+OPENSKY_CLIENT_SECRET=
+AISSTREAM_API_KEY=
+ACLED_API_KEY=
+ACLED_EMAIL=
+MEMGRAPH_BOLT_URL=bolt://localhost:7687
+ALLOWED_ORIGINS=http://localhost:5173
+
+# services/auth/.env
+DATABASE_URL=postgres://godseye:godseye@localhost:5432/globaltracker?sslmode=disable
+AUTH_SERVER_ADDR=:8081
+JWT_SECRET=                       # must match services/api
+FRONTEND_URL=http://localhost:5173
+OAUTH_BASE_URL=http://localhost:8081
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# packages/frontend/.env
 VITE_WS_URL=ws://localhost:8080/ws
+VITE_AUTH_URL=http://localhost:8081
 VITE_CESIUM_ION_TOKEN=
 ```
 
