@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -26,15 +27,24 @@ var testPool *pgxpool.Pool
 
 const testJWTSecret = "test-secret-not-a-real-key"
 
+// testSchema isolates this package's tables. `go test` runs packages in
+// parallel, so sharing one schema with the repository package would let their
+// truncations delete each other's rows mid-test.
+const testSchema = "test_handlers"
+
 func TestMain(m *testing.M) {
-	dsn := os.Getenv("TEST_DATABASE_URL")
-	if dsn == "" {
+	base := os.Getenv("TEST_DATABASE_URL")
+	if base == "" {
 		os.Exit(m.Run())
 	}
 
 	ctx := context.Background()
 
-	var err error
+	dsn, err := isolatedSchemaDSN(ctx, base, testSchema)
+	if err != nil {
+		log.Fatalf("prepare test schema: %v", err)
+	}
+
 	testPool, err = db.Connect(ctx, dsn)
 	if err != nil {
 		log.Fatalf("connect to TEST_DATABASE_URL: %v", err)
@@ -47,6 +57,33 @@ func TestMain(m *testing.M) {
 
 	testPool.Close()
 	os.Exit(code)
+}
+
+// isolatedSchemaDSN drops and recreates a dedicated schema, then returns a DSN
+// whose search_path points at it. Migrations and every query in this package
+// then resolve to that schema alone.
+func isolatedSchemaDSN(ctx context.Context, base, schema string) (string, error) {
+	admin, err := db.Connect(ctx, base)
+	if err != nil {
+		return "", err
+	}
+	defer admin.Close()
+
+	if _, err := admin.Exec(ctx, "DROP SCHEMA IF EXISTS "+schema+" CASCADE"); err != nil {
+		return "", err
+	}
+	if _, err := admin.Exec(ctx, "CREATE SCHEMA "+schema); err != nil {
+		return "", err
+	}
+
+	u, err := url.Parse(base)
+	if err != nil {
+		return "", err
+	}
+	q := u.Query()
+	q.Set("search_path", schema)
+	u.RawQuery = q.Encode()
+	return u.String(), nil
 }
 
 func testConfig() *config.Config {
