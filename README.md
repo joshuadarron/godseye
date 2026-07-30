@@ -178,6 +178,18 @@ go test ./services/...
 pnpm test
 ```
 
+The auth service's database tests need a Postgres instance. They skip unless
+`TEST_DATABASE_URL` is set, so the command above works without one:
+
+```bash
+docker compose up -d
+TEST_DATABASE_URL=postgres://godseye:godseye@localhost:5432/globaltracker?sslmode=disable \
+  go test ./services/auth/...
+```
+
+The graph tests in `services/api/internal/graph` start a Memgraph container via
+testcontainers and require a running Docker daemon.
+
 ---
 
 ## Contributing
