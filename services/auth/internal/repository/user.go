@@ -10,6 +10,10 @@ import (
 )
 
 // User represents a row in the users table.
+//
+// PasswordHash is empty for OAuth users: they never set a password, so the
+// column is NULL in the database. Every query COALESCEs it to an empty string
+// so the NULL never reaches this plain string field.
 type User struct {
 	ID           string    `json:"id"`
 	Email        string    `json:"email"`
@@ -38,7 +42,7 @@ func (r *UserRepo) CreateUser(ctx context.Context, email, passwordHash, name, pr
 	err := r.pool.QueryRow(ctx, `
 		INSERT INTO users (email, password_hash, name, provider, provider_id)
 		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, email, password_hash, name, avatar_url, provider, provider_id, created_at, updated_at
+		RETURNING id, email, COALESCE(password_hash, ''), name, avatar_url, provider, provider_id, created_at, updated_at
 	`, email, passwordHash, name, provider, providerID).Scan(
 		&u.ID, &u.Email, &u.PasswordHash, &u.Name, &u.AvatarURL,
 		&u.Provider, &u.ProviderID, &u.CreatedAt, &u.UpdatedAt,
@@ -53,7 +57,7 @@ func (r *UserRepo) CreateUser(ctx context.Context, email, passwordHash, name, pr
 func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	u := &User{}
 	err := r.pool.QueryRow(ctx, `
-		SELECT id, email, password_hash, name, avatar_url, provider, provider_id, created_at, updated_at
+		SELECT id, email, COALESCE(password_hash, ''), name, avatar_url, provider, provider_id, created_at, updated_at
 		FROM users WHERE email = $1
 	`, email).Scan(
 		&u.ID, &u.Email, &u.PasswordHash, &u.Name, &u.AvatarURL,
@@ -72,7 +76,7 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*User, err
 func (r *UserRepo) GetUserByProviderID(ctx context.Context, provider, providerID string) (*User, error) {
 	u := &User{}
 	err := r.pool.QueryRow(ctx, `
-		SELECT id, email, password_hash, name, avatar_url, provider, provider_id, created_at, updated_at
+		SELECT id, email, COALESCE(password_hash, ''), name, avatar_url, provider, provider_id, created_at, updated_at
 		FROM users WHERE provider = $1 AND provider_id = $2
 	`, provider, providerID).Scan(
 		&u.ID, &u.Email, &u.PasswordHash, &u.Name, &u.AvatarURL,
@@ -91,7 +95,7 @@ func (r *UserRepo) GetUserByProviderID(ctx context.Context, provider, providerID
 func (r *UserRepo) GetUserByID(ctx context.Context, id string) (*User, error) {
 	u := &User{}
 	err := r.pool.QueryRow(ctx, `
-		SELECT id, email, password_hash, name, avatar_url, provider, provider_id, created_at, updated_at
+		SELECT id, email, COALESCE(password_hash, ''), name, avatar_url, provider, provider_id, created_at, updated_at
 		FROM users WHERE id = $1
 	`, id).Scan(
 		&u.ID, &u.Email, &u.PasswordHash, &u.Name, &u.AvatarURL,
@@ -118,7 +122,7 @@ func (r *UserRepo) UpsertOAuthUser(ctx context.Context, email, name, avatarURL, 
 			provider = EXCLUDED.provider,
 			provider_id = EXCLUDED.provider_id,
 			updated_at = NOW()
-		RETURNING id, email, password_hash, name, avatar_url, provider, provider_id, created_at, updated_at
+		RETURNING id, email, COALESCE(password_hash, ''), name, avatar_url, provider, provider_id, created_at, updated_at
 	`, email, name, avatarURL, provider, providerID).Scan(
 		&u.ID, &u.Email, &u.PasswordHash, &u.Name, &u.AvatarURL,
 		&u.Provider, &u.ProviderID, &u.CreatedAt, &u.UpdatedAt,

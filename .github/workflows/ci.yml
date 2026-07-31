@@ -50,6 +50,24 @@ jobs:
   go:
     name: Go Vet & Test
     runs-on: ubuntu-latest
+    services:
+      # Backs the auth service's repository and handler tests. Without it those
+      # tests skip rather than fail.
+      postgres:
+        image: timescale/timescaledb:latest-pg16
+        env:
+          POSTGRES_USER: godseye
+          POSTGRES_PASSWORD: godseye
+          POSTGRES_DB: globaltracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U godseye -d globaltracker"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://godseye:godseye@localhost:5432/globaltracker?sslmode=disable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
