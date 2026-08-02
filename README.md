@@ -18,10 +18,12 @@
 
 ## Quick Start
 
+**macOS / Linux (bash, zsh)**
+
 ```bash
 git clone https://github.com/joshuaferrara/godseye.git && cd godseye
 
-# Start TimescaleDB + Redis
+# Start TimescaleDB + Redis + Memgraph
 docker compose up -d
 
 # API service (terminal 1)
@@ -33,6 +35,27 @@ cd services/auth && cp .env.example .env && go run ./cmd/server
 # Frontend (terminal 3)
 cd packages/frontend && cp .env.example .env && pnpm install && pnpm dev
 ```
+
+**Windows (PowerShell)**
+
+```powershell
+git clone https://github.com/joshuaferrara/godseye.git; cd godseye
+
+# Start TimescaleDB + Redis + Memgraph
+docker compose up -d
+
+# API service (terminal 1)
+cd services/api; Copy-Item .env.example .env; go run ./cmd/server
+
+# Auth service (terminal 2)
+cd services/auth; Copy-Item .env.example .env; go run ./cmd/server
+
+# Frontend (terminal 3)
+cd packages/frontend; Copy-Item .env.example .env; pnpm install; pnpm dev
+```
+
+> Windows PowerShell 5.1 has no `&&` / `||` operators — use `;` to chain, as above.
+> PowerShell 7+ (`pwsh`) supports both, so either style works there.
 
 Open **http://localhost:5173** — you should see a 3D globe with live flights and satellites. Sign-in is available via the button in the top-right corner.
 
@@ -61,7 +84,12 @@ Open **http://localhost:5173** — you should see a 3D globe with live flights a
 
 - [Go](https://go.dev/) 1.25+
 - [Node.js](https://nodejs.org/) 18+ and [pnpm](https://pnpm.io/)
-- [Docker](https://www.docker.com/) and Docker Compose
+- [Docker](https://www.docker.com/) and Docker Compose — on Windows, [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL 2 backend
+- A shell: bash/zsh on macOS/Linux, or Windows PowerShell 5.1 / PowerShell 7+ on Windows
+
+Commands below are given for both **bash/zsh** and **PowerShell**. Go, pnpm, and
+Docker CLI invocations are identical across platforms; only shell built-ins
+(copying files, setting env vars, chaining commands) differ.
 
 [Memgraph](https://memgraph.com/) powers proximity detection and is started by Docker Compose — no separate install needed. The API service runs without it (the graph layer is simply disabled).
 
@@ -71,12 +99,24 @@ Open **http://localhost:5173** — you should see a 3D globe with live flights a
 
 ### Install Dependencies
 
+**macOS / Linux**
+
 ```bash
 # Install frontend dependencies
 pnpm install
 
 # Download Go module dependencies
 cd services/api && go mod download && cd ../..
+```
+
+**Windows (PowerShell)**
+
+```powershell
+# Install frontend dependencies
+pnpm install
+
+# Download Go module dependencies
+cd services/api; go mod download; cd ../..
 ```
 
 ### Infrastructure (Docker Compose)
@@ -95,10 +135,20 @@ This spins up:
 
 There is no root `.env` — each service reads its own. Copy the `.env.example` next to it and fill in the values:
 
+**macOS / Linux**
+
 ```bash
 cp services/api/.env.example services/api/.env
 cp services/auth/.env.example services/auth/.env
 cp packages/frontend/.env.example packages/frontend/.env
+```
+
+**Windows (PowerShell)**
+
+```powershell
+Copy-Item services/api/.env.example services/api/.env
+Copy-Item services/auth/.env.example services/auth/.env
+Copy-Item packages/frontend/.env.example packages/frontend/.env
 ```
 
 **`services/api/.env`** — data ingestion + WebSocket server:
@@ -143,11 +193,23 @@ Required for core functionality: `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET` (shar
 
 Generate a secret with:
 
+**macOS / Linux**
+
 ```bash
 openssl rand -hex 32
 ```
 
+**Windows (PowerShell)** — no `openssl` needed:
+
+```powershell
+$bytes = New-Object byte[] 32
+[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+($bytes | ForEach-Object { $_.ToString('x2') }) -join ''
+```
+
 ### Running the Backend
+
+**macOS / Linux**
 
 ```bash
 # API + WebSocket server (terminal 1)
@@ -155,6 +217,16 @@ cd services/api && go run ./cmd/server
 
 # Auth service (terminal 2)
 cd services/auth && go run ./cmd/server
+```
+
+**Windows (PowerShell)**
+
+```powershell
+# API + WebSocket server (terminal 1)
+cd services/api; go run ./cmd/server
+
+# Auth service (terminal 2)
+cd services/auth; go run ./cmd/server
 ```
 
 API + WebSocket server starts on `localhost:8080`; auth service on `localhost:8081`. Both run their own migrations against the shared database on startup.
@@ -170,22 +242,35 @@ Vite dev server starts on `localhost:5173`.
 
 ### Running Tests
 
-```bash
-# Go tests (all services)
-go test ./services/...
+Same on every platform:
 
-# Frontend tests
-pnpm test
+```
+go test ./services/...   # Go tests (all services)
+pnpm test                # Frontend tests
 ```
 
 The auth service's database tests need a Postgres instance. They skip unless
-`TEST_DATABASE_URL` is set, so the command above works without one:
+`TEST_DATABASE_URL` is set, so the commands above work without one. To run them:
+
+**macOS / Linux**
 
 ```bash
 docker compose up -d
 TEST_DATABASE_URL=postgres://godseye:godseye@localhost:5432/globaltracker?sslmode=disable \
   go test ./services/auth/...
 ```
+
+**Windows (PowerShell)** — PowerShell has no inline `VAR=value cmd` prefix, so
+set the variable first:
+
+```powershell
+docker compose up -d
+$env:TEST_DATABASE_URL = "postgres://godseye:godseye@localhost:5432/globaltracker?sslmode=disable"
+go test ./services/auth/...
+```
+
+`$env:` assignments persist for the rest of the shell session; clear with
+`Remove-Item Env:\TEST_DATABASE_URL` when done.
 
 The graph tests in `services/api/internal/graph` start a Memgraph container via
 testcontainers and require a running Docker daemon.
