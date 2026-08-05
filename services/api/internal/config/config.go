@@ -34,7 +34,7 @@ type Config struct {
 // Load reads configuration from environment variables, applying defaults where appropriate.
 func Load() *Config {
 	return &Config{
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://godseye:godseye@localhost:5432/globaltracker"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://godseye:godseye@localhost:5432/globaltracker?sslmode=disable"),
 		RedisURL:    getEnv("REDIS_URL", "redis://localhost:6379"),
 		ServerAddr:  getEnv("SERVER_ADDR", ":8080"),
 

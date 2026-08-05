@@ -17,6 +17,7 @@ func TestNewClient_BadURL(t *testing.T) {
 }
 
 func TestVerifyConnectivity(t *testing.T) {
+	requireGraph(t)
 	ctx := context.Background()
 	if err := testClient.VerifyConnectivity(ctx); err != nil {
 		t.Fatalf("expected connectivity: %v", err)
@@ -48,6 +49,7 @@ func TestSession_ReadWrite(t *testing.T) {
 }
 
 func TestInitSchema_Idempotent(t *testing.T) {
+	requireGraph(t)
 	ctx := context.Background()
 	// Should not error when run twice.
 	if err := testClient.InitSchema(ctx); err != nil {

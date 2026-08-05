@@ -17,10 +17,25 @@ type TypeMap = Map<string, string>
 let typePromise: Promise<TypeMap> | null = null
 let typeMap: TypeMap | null = null
 
+// These files are gitignored and absent on a fresh clone — `pnpm data:aircraft`
+// builds them from the OpenSky dataset. Missing means Vite serves its SPA
+// index.html fallback, so res.json() would throw a SyntaxError. The promise is
+// memoized, so an unhandled rejection here would poison lookups for the whole
+// session; degrade to an empty map instead.
+async function loadJsonMap<T>(path: string, label: string): Promise<Map<string, T>> {
+  try {
+    const res = await fetch(path)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data: Record<string, T> = await res.json()
+    return new Map(Object.entries(data))
+  } catch (err) {
+    console.warn(`[aircraft] ${label} unavailable (${path}) — run \`pnpm data:aircraft\``, err)
+    return new Map()
+  }
+}
+
 async function loadTypes(): Promise<TypeMap> {
-  const res = await fetch('/data/aircraft.json')
-  const data: Record<string, string> = await res.json()
-  typeMap = new Map(Object.entries(data))
+  typeMap = await loadJsonMap<string>('/data/aircraft.json', 'type map')
   return typeMap
 }
 
@@ -50,9 +65,7 @@ let detailPromise: Promise<DetailMap> | null = null
 let detailMap: DetailMap | null = null
 
 async function loadDetail(): Promise<DetailMap> {
-  const res = await fetch('/data/aircraft-detail.json')
-  const data: Record<string, AircraftMeta> = await res.json()
-  detailMap = new Map(Object.entries(data))
+  detailMap = await loadJsonMap<AircraftMeta>('/data/aircraft-detail.json', 'detail map')
   return detailMap
 }
 

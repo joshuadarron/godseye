@@ -12,6 +12,13 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "pnpm": {
+    "//": "Silences pnpm 10's interactive `pnpm approve-builds` prompt during setup. Neither postinstall is needed: esbuild >=0.16 ships its binary via the @esbuild/<platform> optional dependency, and protobufjs only builds optional CLI extras.",
+    "ignoredBuiltDependencies": [
+      "esbuild",
+      "protobufjs"
+    ]
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^6.9.1",

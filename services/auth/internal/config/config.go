@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -41,8 +41,26 @@ func Load() *Config {
 
 		FrontendURL:    getEnv("FRONTEND_URL", "http://localhost:5173"),
 		AllowedOrigins: parseOrigins(getEnv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")),
-		OAuthBaseURL:   getEnv("OAUTH_BASE_URL", fmt.Sprintf("http://localhost%s", getEnv("AUTH_SERVER_ADDR", ":8081"))),
+		OAuthBaseURL:   getEnv("OAUTH_BASE_URL", defaultOAuthBaseURL(getEnv("AUTH_SERVER_ADDR", ":8081"))),
 	}
+}
+
+// defaultOAuthBaseURL derives a browser-reachable base URL from the listen
+// address, for use when OAUTH_BASE_URL is unset. A listen address may omit the
+// host (":8081"), name one interface ("127.0.0.1:8081"), or bind all of them
+// ("0.0.0.0:8081"); only the first form can be appended to "http://localhost"
+// directly, which is what this used to do — "127.0.0.1:8081" produced the
+// unusable "http://localhost127.0.0.1:8081".
+func defaultOAuthBaseURL(addr string) string {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "http://localhost:8081"
+	}
+	// Wildcard binds aren't addresses a browser can be redirected to.
+	if host == "" || host == "0.0.0.0" || host == "::" {
+		host = "localhost"
+	}
+	return "http://" + net.JoinHostPort(host, port)
 }
 
 func parseOrigins(raw string) []string {

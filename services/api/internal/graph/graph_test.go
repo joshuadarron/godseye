@@ -13,6 +13,9 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
+// testClient is nil when no Docker daemon is available. Tests that need a live
+// graph call requireGraph (directly, or via clearGraph) and skip in that case,
+// so `go test ./...` still works on a machine without Docker.
 var testClient *graph.Client
 
 func TestMain(m *testing.M) {
@@ -29,7 +32,10 @@ func TestMain(m *testing.M) {
 		Started:          true,
 	})
 	if err != nil {
-		log.Fatalf("start memgraph container: %v", err)
+		// No Docker daemon, no image, no network — none of these are test
+		// failures. Leave testClient nil and let the tests skip themselves.
+		log.Printf("memgraph container unavailable, skipping graph tests: %v", err)
+		os.Exit(m.Run())
 	}
 
 	host, _ := container.Host(ctx)
@@ -56,9 +62,18 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// requireGraph skips the calling test when no Memgraph container was started.
+func requireGraph(t *testing.T) {
+	t.Helper()
+	if testClient == nil {
+		t.Skip("memgraph container unavailable (needs a running Docker daemon); skipping graph test")
+	}
+}
+
 // clearGraph removes all nodes and edges between tests.
 func clearGraph(t *testing.T) {
 	t.Helper()
+	requireGraph(t)
 	ctx := context.Background()
 	session := testClient.Session(ctx)
 	defer session.Close(ctx)
