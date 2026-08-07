@@ -1,5 +1,10 @@
 # Environment variables
+# Matches at every level: the root .env (compose interpolation + the shared
+# JWT_SECRET) as well as each service's own.
 .env
+
+# Local dev scratch — Go build cache (see mise.toml) and compiled dev binaries.
+.dev/
 
 # Go
 services/*/server

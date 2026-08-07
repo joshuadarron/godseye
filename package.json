@@ -10,7 +10,10 @@
     "format:fix": "prettier --write .",
     "typecheck": "tsc --noEmit -p packages/frontend/tsconfig.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "infra:up": "docker compose up -d --wait --wait-timeout 120 timescaledb redis",
+    "infra:down": "docker compose down",
+    "data:aircraft": "node scripts/build-aircraft-db.mjs"
   },
   "pnpm": {
     "//": "Silences pnpm 10's interactive `pnpm approve-builds` prompt during setup. Neither postinstall is needed: esbuild >=0.16 ships its binary via the @esbuild/<platform> optional dependency, and protobufjs only builds optional CLI extras.",

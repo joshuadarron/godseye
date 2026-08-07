@@ -1,0 +1,30 @@
+# Line endings are normalised to LF in the repository and, with one exception,
+# in the working tree too. Without this, a Windows clone with core.autocrlf=true
+# checks everything out as CRLF, and then:
+#
+#   - `pnpm format` fails on every file, because Prettier defaults to
+#     endOfLine: "lf" (this was failing on 107 files locally while CI was green)
+#   - shell scripts get CRLF and fail under Git Bash or WSL with the famously
+#     unhelpful `/bin/sh^M: bad interpreter: No such file or directory`
+#
+# The exception is *.ps1: Windows PowerShell 5.1 is the documented shell for
+# this repo, and CRLF is the safe convention there.
+
+* text=auto eol=lf
+
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Generated, and large. Collapse them in diffs and reviews.
+pnpm-lock.yaml -diff linguist-generated
+packages/frontend/public/data/*.json -diff linguist-generated
+
+# Binary assets — never touch these.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

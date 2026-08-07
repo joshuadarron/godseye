@@ -1,0 +1,35 @@
+# Toolchain pins for local development, used by `mise install` (https://mise.jdx.dev).
+#
+#   macOS / Linux   curl https://mise.run | sh
+#   Windows         winget install jdx.mise
+#   then            mise trust && mise install
+#
+# ./bootstrap.sh and .\bootstrap.ps1 do all of the above for you.
+#
+# These versions must match .github/workflows/ci.yml — CI pins Go 1.25 and
+# Node 22 there, and a local toolchain that drifts from CI is worse than none.
+
+[tools]
+# go.work and services/api/go.mod both declare 1.25.0; services/auth and
+# services/collector declare 1.22, so 1.25 is the binding floor.
+go = "1.25"
+# vite 7 requires ^20.19.0 || >=22.12.0. The README's old "Node 18+" claim was
+# wrong — 18 cannot run `pnpm dev`.
+node = "22"
+
+# pnpm is deliberately absent. package.json already pins it canonically via
+# "packageManager": "pnpm@10.23.0", which corepack reads; a second pin here
+# would be one more thing to keep in sync. The bootstrap scripts run
+# `corepack enable pnpm` instead, using the Node pinned above.
+
+[env]
+# Keep the Go build cache inside the repo so it is easy to find and to clear,
+# and so `pnpm dev` rebuilds stay warm across branches.
+GOCACHE = "{{config_root}}/.dev/gocache"
+
+[tasks.infra]
+description = "Start Postgres + Redis and wait for them to be ready"
+# --wait names the two services explicitly. Waiting on every service would let
+# Memgraph — which is optional, and whose container is by far the slowest to
+# come up — block the stack.
+run = "docker compose up -d --wait --wait-timeout 120 timescaledb redis"
