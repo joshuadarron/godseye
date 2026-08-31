@@ -67,13 +67,13 @@ Open **http://localhost:5173** — you should see a 3D globe with live flights a
 
 | Layer               | Source                            | Interval       | Status   |
 | ------------------- | --------------------------------- | -------------- | -------- |
-| Flights             | OpenSky Network (ADS-B)           | 1 s            | **Live** |
+| Flights             | OpenSky Network (ADS-B)           | 10 s           | **Live** |
 | Satellites          | CelesTrak TLE + SGP4              | 1 s (computed) | **Live** |
-| Vessels             | AISStream (AIS)                   | 1-5 s          | **Live** |
+| Vessels             | AISStream (AIS)                   | 5 s            | **Live** |
 | Trains              | OpenRailwayMap, Transitland, GTFS | 5-10 s         | Planned  |
-| Earthquakes         | USGS Earthquake API               | Real-time      | **Live** |
+| Earthquakes         | USGS Earthquake API               | 5 min          | **Live** |
 | Weather Alerts      | OpenWeatherMap                    | Real-time      | Planned  |
-| Armed Conflicts     | ACLED                             | 15 min         | Planned  |
+| Armed Conflicts     | ACLED                             | 15 min         | **Live** |
 | News / Geopolitical | GDELT Project                     | 15 min         | Planned  |
 | Humanitarian        | ReliefWeb API                     | 15 min         | Planned  |
 | Sports / Concerts   | Ticketmaster, PredictHQ           | 15 min         | Planned  |

@@ -1,6 +1,8 @@
 # CLAUDE.md — Global Tracker
 
-Real-time global tracking app visualizing flights, vessels, trains, and active events on a 3D CesiumJS globe. Data streams via WebSocket at 1-second intervals, persisted in TimescaleDB.
+Real-time global tracking app visualizing flights, satellites, vessels, and active events on a 3D CesiumJS globe. Each layer streams deltas over a single WebSocket at its own cadence and is persisted in TimescaleDB.
+
+Live layers: flights, satellites, vessels, earthquakes (`events`), armed conflicts. Trains are a UI placeholder with no worker behind them yet — see the data-layer table in `README.md` for current status, and `ARCHITECTURE.md` for the wiring.
 
 ---
 
@@ -10,18 +12,21 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 /
 ├── pnpm-workspace.yaml          # JS/TS workspace packages
 ├── go.work                      # Go workspace linking all Go services
-├── docker-compose.yml           # TimescaleDB + Redis for local dev
+├── docker-compose.yml           # TimescaleDB + Redis + Memgraph for local dev
 │
 ├── packages/
 │   ├── frontend/                # React + Vite + pnpm
 │   │   ├── src/
 │   │   │   ├── components/
-│   │   │   │   ├── Globe/       # CesiumJS JS API wrapper
-│   │   │   │   ├── HUD/         # Overlay panels, legends, counters
-│   │   │   │   └── Filters/     # Layer toggles per data type
+│   │   │   │   ├── Globe/       # CesiumJS layers and selection overlays
+│   │   │   │   ├── HUD/         # Toolbar, layer tabs, tooltips, detail panels
+│   │   │   │   └── Auth/        # Login, register, OAuth callback
+│   │   │   ├── registries/      # Per-layer registration (icons, colors, panels)
 │   │   │   ├── stores/          # Zustand state (one store per data layer)
-│   │   │   ├── hooks/           # useWebSocket, useGlobeEntities
-│   │   │   └── types/           # Shared TypeScript interfaces
+│   │   │   ├── hooks/           # useWebSocket, useNearby, useEncounters, ...
+│   │   │   ├── api/             # REST + auth clients
+│   │   │   ├── utils/           # Classifiers, lookups, Cesium helpers
+│   │   │   └── types/           # Frontend-only TypeScript interfaces
 │   │   ├── vite.config.ts
 │   │   └── package.json
 │   └── shared/                  # Shared TS types (@godseye/shared)
@@ -33,10 +38,13 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 │   │   ├── internal/
 │   │   │   ├── ingestion/       # One worker per data source
 │   │   │   ├── broadcast/       # Redis pub/sub → WebSocket fanout
-│   │   │   └── db/              # TimescaleDB queries (PostGIS enabled)
+│   │   │   ├── graph/           # Memgraph proximity worker + queries
+│   │   │   ├── api/             # REST route registration + handlers
+│   │   │   ├── middleware/      # JWT auth for /api/me routes
+│   │   │   └── db/              # TimescaleDB queries + migrations (PostGIS)
 │   │   └── go.mod
-│   ├── auth/                    # Go — auth service (placeholder)
-│   └── collector/               # Go — historical data collector (placeholder)
+│   ├── auth/                    # Go — auth service (email/password + GitHub/Google OAuth)
+│   └── collector/               # Go — historical data collector (empty stub)
 │
 └── infra/                       # Future k8s/terraform configs
 ```
@@ -49,23 +57,25 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 
 - **Language**: Go
 - **Database**: TimescaleDB (PostgreSQL + time-series hypertables) with PostGIS for geospatial queries
-- **Cache / Pub-Sub**: Redis — ingestion workers publish here; WebSocket server subscribes and fans out to clients
-- **WebSockets**: Gorilla WebSocket or nhooyr/websocket for the real-time broadcast layer
+- **Graph**: Memgraph — proximity (`NEAR`) edges between flights, satellites, and vessels; optional, the API runs with the graph layer disabled when it is unreachable
+- **Pub-Sub**: Redis — ingestion workers publish deltas; the broadcaster subscribes and fans out to clients. No key/value caching today, pub/sub only
+- **WebSockets**: `nhooyr.io/websocket` — both the broadcast server and the AIS client
 - **Pattern**: Each data source has its own goroutine-based ingestion worker with backoff/retry logic
 
 ### Frontend
 
-- **Framework**: React 18
-- **Build tool**: Vite
+- **Framework**: React 19
+- **Build tool**: Vite 7
 - **Package manager**: pnpm
-- **Globe**: CesiumJS (3D globe, terrain, atmosphere, orbital altitude support)
-- **State**: Zustand — one store per data layer (flights, vessels, trains, events)
-- **Styling**: Tailwind CSS (HUD overlays, panels, filters)
-- **Transport**: Native WebSocket client with delta reconciliation
+- **Globe**: CesiumJS via Resium (3D globe, terrain, atmosphere, orbital altitude support)
+- **State**: Zustand — one store per data layer (flights, satellites, vessels, earthquakes, conflicts) plus auth, connection, HUD, selection, and layer-visibility stores
+- **Layer registry**: Each layer registers itself in `src/registries/` with its subtypes, icons, colors, detail panel, tooltip, and optional custom Cesium layer. Adding a layer should not require touching `App`
+- **Styling**: Tailwind CSS v4 (HUD overlays, panels, filters)
+- **Transport**: Native WebSocket client with delta reconciliation, batched per animation frame
 
 ### Infrastructure
 
-- Docker Compose at project root for local dev (TimescaleDB + Redis)
+- Docker Compose at project root for local dev (TimescaleDB + Redis + Memgraph)
 
 ---
 
@@ -78,8 +88,8 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 
 ### Vessels / Maritime
 
-- **Primary**: AISHub — free AIS aggregator (requires AIS feed share or key request)
-- **Secondary**: MarineTraffic or VesselFinder free developer tiers
+- **In use**: [AISStream](https://aisstream.io/) — free AIS WebSocket stream, `AISSTREAM_API_KEY`. The worker holds a live connection, publishes a delta every 5 s, persists every 30 s, and evicts vessels unseen for 30 min
+- **Alternatives**: AISHub, MarineTraffic, or VesselFinder free developer tiers
 - Includes: cargo, military, emergency, personal, tankers, cruise
 
 ### Trains
@@ -118,32 +128,38 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
       ▼
 [Go Ingestion Workers]  ──────────────────────────►  [TimescaleDB + PostGIS]
   (one per source,                                     (persistence + geo queries)
-   goroutine-based)
+   goroutine-based)                                            ▲
+      │                                                        │
+      ▼                                              [Go Auth Service :8081]
+[Redis Pub/Sub]  ─────────►  [Graph Worker]  ─────►  [Memgraph]  (NEAR edges)
+      │                                                  ▲
+      ▼                                                  │
+[Go WebSocket Server :8080]  ◄── REST /api/* ────────────┘
       │
       ▼
-[Redis Pub/Sub]
-      │
-      ▼
-[Go WebSocket Server]
-      │
-      ▼
-[React Client + CesiumJS Globe]
-  (1-second delta updates via WS)
+[React Client + CesiumJS Globe :5173]
+  (per-layer delta updates, batched per animation frame)
 ```
+
+The auth service is a separate Go binary sharing the database and `JWT_SECRET`
+with the API. See `ARCHITECTURE.md` for the detailed diagrams.
 
 ---
 
 ## Update Cadence
 
-| Layer                 | Update Interval                          |
-| --------------------- | ---------------------------------------- |
-| Flights               | 1 second                                 |
-| Satellites            | 1 second (computed via SGP4 propagation) |
-| Vessels               | 1–5 seconds                              |
-| Trains                | 5–10 seconds                             |
-| Earthquakes / Weather | Real-time as events occur                |
-| Conflicts / GDELT     | 15 minutes                               |
-| Sports / Concerts     | 15 minutes                               |
+Actual worker intervals, from `services/api/internal/ingestion/`:
+
+| Layer             | Update Interval                        | Status  |
+| ----------------- | -------------------------------------- | ------- |
+| Flights           | 10 s poll (OpenSky)                    | live    |
+| Satellites        | 1 s SGP4 propagation, 24 h TLE refresh | live    |
+| Vessels           | AIS stream, 5 s publish / 30 s persist | live    |
+| Earthquakes       | 5 min poll (USGS)                      | live    |
+| Conflicts         | 15 min poll (ACLED)                    | live    |
+| Trains            | 5–10 s (target)                        | planned |
+| Weather / GDELT   | Real-time / 15 min (target)            | planned |
+| Sports / Concerts | 15 min (target)                        | planned |
 
 ---
 
@@ -151,8 +167,9 @@ Real-time global tracking app visualizing flights, vessels, trains, and active e
 
 - All geo coordinates stored as PostGIS `GEOGRAPHY(POINT, 4326)` — never as raw lat/lng float columns
 - TimescaleDB hypertables partitioned by `recorded_at` timestamp — always include time bounds in queries
-- Redis keys follow the pattern `layer:{source}:{entity_id}` (e.g., `flight:opensky:abc123`)
-- WebSocket messages are JSON delta payloads: `{ layer, action: "upsert"|"remove", entities: [...] }`
+- Redis pub/sub channels are named `channel:{layer}` — `channel:flights`, `channel:satellites`, `channel:vessels`, `channel:events` (earthquakes), `channel:conflicts`, and `channel:trains` (subscribed, no publisher yet)
+- WebSocket messages are JSON delta payloads: `{ layer, action: "upsert"|"remove", entities: [...] }`, defined in `packages/shared/src/entity.ts` and mirrored by the Go models
+- REST reads are public; authenticated per-user routes live under `/api/me` and are only registered when `JWT_SECRET` is set
 - Frontend stores only hold the _current snapshot_ of each layer — historical data lives in the DB only
 - Ingestion workers must implement exponential backoff and respect API rate limits — never hammer a free API
 
@@ -202,5 +219,5 @@ VITE_CESIUM_ION_TOKEN=
 - **ACLED/GDELT**: Event data, not real-time second-by-second — render as static markers with timestamps, not moving entities
 - **Satellite positions**: Not fetched live — derived by running SGP4 orbital propagation on TLE data every second. Refresh TLE sets from CelesTrak daily (Starlink every few hours)
 - **AIS vessel data**: Commercial vessels broadcast AIS; military and some private vessels may go dark intentionally
-- **Rate limits**: All free API tiers have caps — the Redis cache layer is critical to avoid redundant fetches
+- **Rate limits**: All free API tiers have caps — workers hold their own in-memory snapshot and diff against it rather than refetching; Redis is pub/sub only and caches nothing
 - **WebSocket fan-out**: Use Redis pub/sub to decouple ingestion from client delivery — never write directly from an ingestion worker to a client connection

@@ -7,10 +7,11 @@ graph TB
   subgraph External["External Data Sources"]
     OpenSky["OpenSky Network<br/><i>ADS-B flights</i>"]
     CelesTrak["CelesTrak<br/><i>TLE orbital elements</i>"]
-    AISHub["AISHub<br/><i>AIS vessel data</i>"]:::planned
-    ACLED["ACLED<br/><i>Armed conflicts</i>"]:::planned
+    AISStream["AISStream<br/><i>AIS vessel stream</i>"]
+    USGS["USGS<br/><i>Earthquakes</i>"]
+    ACLED["ACLED<br/><i>Armed conflicts</i>"]
+    ORM["OpenRailwayMap / GTFS<br/><i>Trains</i>"]:::planned
     GDELT["GDELT Project<br/><i>News & geopolitical</i>"]:::planned
-    USGS["USGS<br/><i>Earthquakes</i>"]:::planned
     OWM["OpenWeatherMap<br/><i>Weather alerts</i>"]:::planned
     TM["Ticketmaster / PredictHQ<br/><i>Sports & concerts</i>"]:::planned
   end
@@ -19,8 +20,10 @@ graph TB
     subgraph Workers["Ingestion Workers · goroutines"]
       FW["FlightWorker<br/><i>10s poll · OAuth2</i>"]
       SW["SatelliteWorker<br/><i>24h TLE fetch · 1s propagate</i>"]
-      VW["VesselWorker"]:::planned
-      EW["EventWorker"]:::planned
+      VW["VesselWorker<br/><i>AIS stream · 5s publish · 30s persist</i>"]
+      EW["EarthquakeWorker<br/><i>5m poll</i>"]
+      CW["ConflictWorker<br/><i>15m poll</i>"]
+      TW["TrainWorker"]:::planned
     end
 
     subgraph Broadcast["Broadcaster"]
@@ -33,7 +36,12 @@ graph TB
     end
 
     WS["WebSocket Server<br/><i>GET /ws</i>"]
-    API["REST API<br/><i>/api/flights · /api/satellites<br/>/api/graph/nearby · /api/graph/encounters</i>"]
+    API["REST API<br/><i>/api/flights · /api/satellites · /api/vessels<br/>/api/earthquakes · /api/conflicts<br/>/api/graph/nearby · /api/graph/encounters<br/>/api/me · authenticated</i>"]
+  end
+
+  subgraph Auth["Go Auth Service · :8081"]
+    AuthAPI["Auth API<br/><i>/auth/register · /auth/login<br/>/auth/refresh · /auth/logout · /auth/me</i>"]
+    OAuth["OAuth<br/><i>GitHub · Google · code exchange</i>"]
   end
 
   subgraph Infra["Infrastructure · Docker Compose"]
@@ -48,15 +56,22 @@ graph TB
     subgraph Stores["Zustand Stores"]
       FS["useFlightStore"]
       SS["useSatelliteStore"]
+      VS["useVesselStore"]
+      ES["useEarthquakeStore"]
+      CS["useConflictStore"]
+      AS["useAuthStore"]
     end
 
     subgraph Registry["Layer Registry"]
       FR["flights registration<br/><i>subtypes · icons · colors</i>"]
-      SR["satellites registration<br/><i>subtypes · icons · colors</i>"]
+      SR["satellites registration<br/><i>custom SGP4 layer</i>"]
+      VR["vessels registration"]
+      ER["events registration<br/><i>earthquakes</i>"]
+      CR["conflicts registration"]
     end
 
     subgraph Globe["CesiumJS Globe"]
-      GEL["GenericEntityLayer"]
+      GEL["GenericEntityLayer<br/><i>one per registration</i>"]
       ML["ModelLayer<br/><i>BillboardCollection</i>"]
       SPL["SatellitePropagationLayer<br/><i>client-side SGP4</i>"]
       EL["EncounterLayer<br/><i>PolylineCollection</i>"]
@@ -69,34 +84,39 @@ graph TB
     end
 
     subgraph HUD["HUD Panels"]
-      FDP["FlightDetailPanel"]
-      SDP["SatelliteDetailPanel"]
-      VDP["VesselDetailPanel"]
+      EDP["EntityDetailPanel<br/><i>dispatches to per-layer panel</i>"]
+      ETT["EntityTooltip<br/><i>dispatches to per-layer tooltip</i>"]
       NS["NearbySection<br/><i>graph proximity</i>"]
-      FTT["FlightTooltip"]
-      STT["SatelliteTooltip"]
-      Sidebar["Sidebar<br/><i>layer toggles</i>"]
+      Toolbar["HUDToolbar<br/><i>layer tabs · search · sub-filters</i>"]
+      Conn["ConnectionStatus"]
     end
   end
 
   %% External → Workers
   OpenSky --> FW
   CelesTrak --> SW
-  AISHub -.-> VW
-  ACLED -.-> EW
-  GDELT -.-> EW
-  USGS -.-> EW
+  AISStream --> VW
+  USGS --> EW
+  ACLED --> CW
+  ORM -.-> TW
+  GDELT -.-> CW
   OWM -.-> EW
   TM -.-> EW
 
   %% Workers → Redis & DB
   FW -- "publish delta" --> Redis
   SW -- "publish delta" --> Redis
+  VW -- "publish delta" --> Redis
+  EW -- "publish delta" --> Redis
+  CW -- "publish delta" --> Redis
   FW -- "batch INSERT" --> TSDB
   SW -- "persist TLEs" --> TSDB
+  VW -- "batch INSERT" --> TSDB
+  EW -- "batch INSERT" --> TSDB
+  CW -- "batch INSERT" --> TSDB
 
   %% Redis → Broadcaster → WebSocket
-  Redis -- "subscribe 5 channels" --> RedisSub
+  Redis -- "subscribe 6 channels" --> RedisSub
   RedisSub --> Fanout
   Fanout --> WS
 
@@ -108,16 +128,33 @@ graph TB
   API --> TSDB
   API -- "proximity queries" --> Memgraph
 
+  %% Auth service
+  AuthAPI --> TSDB
+  OAuth --> TSDB
+  AS -- "login · refresh" --> AuthAPI
+  AS -- "OAuth code exchange" --> OAuth
+  AS -- "Bearer JWT" --> API
+  AS -- "JWT" --> WS
+
   %% WebSocket → Frontend
   WS -- "JSON DeltaMessage" --> WSHook
   WSHook -- "processDeltas()" --> FS
   WSHook -- "processDeltas()" --> SS
+  WSHook -- "processDeltas()" --> VS
+  WSHook -- "processDeltas()" --> ES
+  WSHook -- "processDeltas()" --> CS
 
   %% Stores → Registry → Globe
   FS --> FR
   SS --> SR
+  VS --> VR
+  ES --> ER
+  CS --> CR
   FR --> GEL
   SR --> GEL
+  VR --> GEL
+  ER --> GEL
+  CR --> GEL
   GEL --> ML
   GEL --> SPL
 
@@ -127,15 +164,19 @@ graph TB
   SR -. "on select" .-> SFO
 
   %% Registry → HUD
-  FR -. "on select" .-> FDP
-  FR -. "on hover" .-> FTT
-  SR -. "on select" .-> SDP
-  SR -. "on hover" .-> STT
+  FR -. "on select" .-> EDP
+  SR -. "on select" .-> EDP
+  VR -. "on select" .-> EDP
+  ER -. "on select" .-> EDP
+  CR -. "on select" .-> EDP
+  FR -. "on hover" .-> ETT
+  SR -. "on hover" .-> ETT
+  VR -. "on hover" .-> ETT
+  ER -. "on hover" .-> ETT
+  CR -. "on hover" .-> ETT
 
   %% NearbySection in detail panels
-  FDP --> NS
-  SDP --> NS
-  VDP --> NS
+  EDP --> NS
 
   %% EncounterLayer polls graph API
   EL -. "GET /api/graph/encounters<br/>every 5s" .-> API
@@ -157,12 +198,12 @@ sequenceDiagram
   participant Store as Zustand Store
   participant Globe as CesiumJS Globe
 
-  loop Every 10s (flights) / 24h (TLEs)
-    Worker->>API: Poll for data
+  loop Poll 10s flights · 5m earthquakes · 15m conflicts · 24h TLEs<br/>Vessels stream in, publish every 5s
+    Worker->>API: Poll for data, or receive stream frame
     API-->>Worker: Raw response
     Worker->>Worker: Parse & diff against previous snapshot
     Worker->>DB: Batch INSERT (ST_MakePoint)
-    Worker->>Redis: PUBLISH channel:flights / channel:satellites
+    Worker->>Redis: PUBLISH channel:flights / :satellites / :vessels / :events / :conflicts
   end
 
   Redis->>BC: Message on subscribed channel
@@ -171,13 +212,16 @@ sequenceDiagram
 
   WS->>Hook: onmessage event
   Hook->>Hook: Buffer messages until rAF
-  Hook->>Store: processDeltas(entities, "upsert" | "remove")
+  Hook->>Store: processDeltas(entities, upsert | remove)
   Store->>Globe: React re-render triggers billboard updates
 
   Note over Globe: Incremental diff —<br/>only changed entities<br/>are added/removed/updated
 ```
 
 ## Database Schema
+
+Every table below is a TimescaleDB hypertable partitioned on `recorded_at`, and
+every position column is a PostGIS `GEOGRAPHY(POINT, 4326)`.
 
 ```mermaid
 erDiagram
@@ -201,7 +245,62 @@ erDiagram
     text tle_line2
     timestamptz fetched_at "hypertable partition key"
   }
+
+  vessels {
+    text mmsi "AIS maritime identity"
+    text name
+    text callsign
+    geography position "POINT(lng lat) · SRID 4326"
+    float speed
+    float course "degrees"
+    float heading "degrees"
+    integer ship_type "AIS type code"
+    integer imo
+    text destination
+    float length
+    float width
+    float draught
+    integer nav_status "AIS navigational status"
+    timestamptz recorded_at "hypertable partition key"
+  }
+
+  earthquakes {
+    text usgs_id "USGS event id"
+    geography position "POINT(lng lat) · SRID 4326"
+    float magnitude
+    text place
+    float depth "km"
+    timestamptz event_time
+    text url
+    text alert "USGS PAGER alert level"
+    integer tsunami
+    integer significance
+    text mag_type
+    text status
+    timestamptz recorded_at "hypertable partition key"
+  }
+
+  conflicts {
+    text acled_id "ACLED data_id"
+    geography position "POINT(lng lat) · SRID 4326"
+    date event_date
+    text event_type
+    text sub_event_type
+    text actor1
+    text actor2
+    text country
+    text admin1
+    text location
+    integer fatalities
+    text notes
+    text source
+    timestamptz acled_timestamp
+    timestamptz recorded_at "hypertable partition key"
+  }
 ```
+
+The auth service owns its own migrations against the same database:
+`users`, `refresh_tokens`, and `oauth_codes`.
 
 ## WebSocket Message Format
 
@@ -217,6 +316,8 @@ classDiagram
     +float lat
     +float lng
     +float heading
+    +float pitch
+    +float roll
   }
   class Flight {
     +string callsign
@@ -225,6 +326,10 @@ classDiagram
     +float velocity
     +boolean onGround
     +string source
+    +float verticalRate
+    +float geoAltitude
+    +string squawk
+    +int category
   }
   class Satellite {
     +string name
@@ -234,12 +339,54 @@ classDiagram
     +string tle1
     +string tle2
   }
+  class Vessel {
+    +string name
+    +string callsign
+    +float speed
+    +float course
+    +int shipType
+    +int imo
+    +string destination
+    +float length
+    +float width
+    +float draught
+    +int navStatus
+  }
+  class Earthquake {
+    +float magnitude
+    +string place
+    +float depth
+    +string time
+    +string url
+    +string alert
+    +int tsunami
+    +int significance
+    +string magType
+    +string status
+  }
+  class ArmedConflict {
+    +string eventDate
+    +string eventType
+    +string subEventType
+    +string actor1
+    +string actor2
+    +string country
+    +string admin1
+    +string location
+    +int fatalities
+    +string notes
+    +string source
+    +string timestamp
+  }
 
   DeltaMessage --> Entity : contains
   Entity <|-- Flight
   Entity <|-- Satellite
+  Entity <|-- Vessel
+  Entity <|-- Earthquake
+  Entity <|-- ArmedConflict
 
-  note for DeltaMessage "layer: 'flights' | 'satellites'\naction: 'upsert' | 'remove'"
+  note for DeltaMessage "layer: flights | satellites | vessels | events | conflicts\naction: upsert | remove"
 ```
 
 ## Frontend Component Tree
@@ -251,13 +398,13 @@ graph TD
   WSHook["useWebSocket()"]
   Viewer["Cesium Viewer"]
   ViewerInit["ViewerInit<br/><i>imagery · atmosphere</i>"]
+  VBR["ViewportBoundsReporter"]
   PickHandler["PickHandler<br/><i>hover & click detection</i>"]
 
-  GEL_F["GenericEntityLayer<br/><i>flights</i>"]
-  GEL_S["GenericEntityLayer<br/><i>satellites</i>"]
-
+  GEL["GenericEntityLayer<br/><i>one per registered layer</i>"]
+  DEL["DefaultEntityLayer"]
   ML["ModelLayer<br/><i>BillboardCollection</i>"]
-  SPL["SatellitePropagationLayer<br/><i>SGP4 per-frame</i>"]
+  SPL["SatellitePropagationLayer<br/><i>custom layer · SGP4 per-frame</i>"]
   EL2["EncounterLayer<br/><i>PolylineCollection</i>"]
 
   SelOverlays["SelectedOverlays"]
@@ -265,50 +412,59 @@ graph TD
   SOO["SatelliteOrbitOverlay"]
   SFO["SatelliteFootprintOverlay"]
 
-  Sidebar["Sidebar"]
-  LayerGroup["LayerGroup<br/><i>per registered layer</i>"]
-  SubtypeToggle["SubtypeToggle"]
-  EntityCounter["EntityCounter"]
+  Toolbar["HUDToolbar"]
+  LayerTab["LayerTab<br/><i>per registered layer</i>"]
+  SubFilter["SubFilterPopover<br/><i>subtype toggles</i>"]
+  Search["SearchInput"]
+  SearchRes["SearchResultsPanel"]
 
-  FDP2["FlightDetailPanel"]
-  SDP2["SatelliteDetailPanel"]
-  VDP2["VesselDetailPanel"]
+  EDP["EntityDetailPanel"]
+  PerLayerPanel["FlightDetailPanel · SatelliteDetailPanel<br/>VesselDetailPanel · EarthquakeDetailPanel<br/>ConflictDetailPanel"]
+  ETT["EntityTooltip"]
+  PerLayerTip["FlightTooltip · SatelliteTooltip<br/>VesselTooltip · EarthquakeTooltip<br/>ConflictTooltip"]
   NS2["NearbySection"]
-  FTT["FlightTooltip"]
-  STT["SatelliteTooltip"]
+  Conn["ConnectionStatus"]
+  AuthUI["Auth<br/><i>LoginPage · RegisterPage · OAuthCallback</i>"]
 
   App --> Globe
-  App --> Sidebar
-  App --> FDP2
-  App --> SDP2
-  App --> VDP2
-  App --> FTT
-  App --> STT
+  App --> Toolbar
+  App --> ETT
+  App --> EDP
+  App --> Conn
+  App --> AuthUI
 
   Globe --> WSHook
   Globe --> Viewer
   Viewer --> ViewerInit
+  Viewer --> VBR
   Viewer --> PickHandler
-  Viewer --> GEL_F
-  Viewer --> GEL_S
+  Viewer --> GEL
   Viewer --> EL2
   Viewer --> SelOverlays
 
-  GEL_F --> ML
-  GEL_S --> SPL
+  GEL --> DEL
+  GEL --> SPL
+  DEL --> ML
 
   SelOverlays --> FTO
   SelOverlays --> SOO
   SelOverlays --> SFO
 
-  FDP2 --> NS2
-  SDP2 --> NS2
-  VDP2 --> NS2
+  EDP --> PerLayerPanel
+  PerLayerPanel --> NS2
+  ETT --> PerLayerTip
 
-  Sidebar --> LayerGroup
-  LayerGroup --> SubtypeToggle
-  LayerGroup --> EntityCounter
+  Toolbar --> LayerTab
+  Toolbar --> Search
+  Search --> SearchRes
+  LayerTab --> SubFilter
 ```
+
+`GenericEntityLayer` renders a registration's `customLayer` when it declares one
+— satellites use `SatellitePropagationLayer` — and otherwise falls back to
+`DefaultEntityLayer` → `ModelLayer`. `EntityDetailPanel` and `EntityTooltip`
+resolve the concrete component from the layer registry, so adding a layer
+requires no change in `App`.
 
 ## Redis Channel Map
 
@@ -317,26 +473,29 @@ graph LR
   subgraph Channels["Redis Pub/Sub Channels"]
     CF["channel:flights"]
     CS["channel:satellites"]
-    CV["channel:vessels"]:::planned
+    CV["channel:vessels"]
+    CE["channel:events"]
+    CC["channel:conflicts"]
     CT["channel:trains"]:::planned
-    CE["channel:events"]:::planned
   end
 
   FW["FlightWorker"] --> CF
   SW["SatelliteWorker"] --> CS
-  VW["VesselWorker"]:::planned -.-> CV
+  VW["VesselWorker"] --> CV
+  EW["EarthquakeWorker"] --> CE
+  CW["ConflictWorker"] --> CC
   TW["TrainWorker"]:::planned -.-> CT
-  EW["EventWorker"]:::planned -.-> CE
 
   CF --> BC["Broadcaster"]
   CS --> BC
-  CV -.-> BC
+  CV --> BC
+  CE --> BC
+  CC --> BC
   CT -.-> BC
-  CE -.-> BC
 
   CF --> GW2["GraphWorker"]
   CS --> GW2
-  CV -.-> GW2
+  CV --> GW2
 
   BC --> C1["Client 1"]
   BC --> C2["Client 2"]
@@ -345,6 +504,10 @@ graph LR
 
   classDef planned fill:#1a1a2e,stroke:#555,stroke-dasharray:5 5,color:#888
 ```
+
+The broadcaster subscribes to all six channels — `channel:trains` is already
+wired and simply carries no traffic until a `TrainWorker` exists. The graph
+worker subscribes only to the three moving-entity channels.
 
 ## Graph Schema (Memgraph)
 
@@ -370,6 +533,9 @@ graph LR
 
   classDef planned fill:#1a1a2e,stroke:#555,stroke-dasharray:5 5,color:#888
 ```
+
+Event layers — earthquakes and conflicts — are static markers with timestamps
+rather than moving entities, so they are not written to the graph.
 
 ### Proximity Thresholds
 
