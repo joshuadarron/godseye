@@ -10,8 +10,8 @@
 # Node 22 there, and a local toolchain that drifts from CI is worse than none.
 
 [tools]
-# go.work and services/api/go.mod both declare 1.25.0; services/auth and
-# services/collector declare 1.22, so 1.25 is the binding floor.
+# go.work and services/api/go.mod both declare 1.25.0; services/auth declares
+# 1.22, so 1.25 is the binding floor.
 go = "1.25"
 # vite 7 requires ^20.19.0 || >=22.12.0. The README's old "Node 18+" claim was
 # wrong — 18 cannot run `pnpm dev`.
