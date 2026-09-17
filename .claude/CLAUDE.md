@@ -43,8 +43,7 @@ Live layers: flights, satellites, vessels, earthquakes (`events`), armed conflic
 │   │   │   ├── middleware/      # JWT auth for /api/me routes
 │   │   │   └── db/              # TimescaleDB queries + migrations (PostGIS)
 │   │   └── go.mod
-│   ├── auth/                    # Go — auth service (email/password + GitHub/Google OAuth)
-│   └── collector/               # Go — historical data collector (empty stub)
+│   └── auth/                    # Go — auth service (email/password + GitHub/Google OAuth)
 │
 └── infra/                       # Future k8s/terraform configs
 ```
@@ -172,6 +171,7 @@ Actual worker intervals, from `services/api/internal/ingestion/`:
 - REST reads are public; authenticated per-user routes live under `/api/me` and are only registered when `JWT_SECRET` is set
 - Frontend stores only hold the _current snapshot_ of each layer — historical data lives in the DB only
 - Ingestion workers must implement exponential backoff and respect API rate limits — never hammer a free API
+- Go module paths are `github.com/joshuadarron/godseye/services/<name>`; never derive the repo owner from a dependency path
 
 ---
 
@@ -207,14 +207,15 @@ GOOGLE_CLIENT_SECRET=
 # packages/frontend/.env
 VITE_WS_URL=ws://localhost:8080/ws
 VITE_AUTH_URL=http://localhost:8081
-VITE_CESIUM_ION_TOKEN=
+VITE_API_URL=                     # optional; falls back to the VITE_WS_URL host
+VITE_CESIUM_ION_TOKEN=            # optional
 ```
 
 ---
 
 ## Known Constraints & Gotchas
 
-- **CesiumJS**: Free for non-commercial use; Cesium Ion token required for terrain/imagery tiles — monitor usage
+- **CesiumJS**: Free for non-commercial use; a Cesium Ion token is optional. `Globe.tsx` only sets `Ion.defaultAccessToken` when `VITE_CESIUM_ION_TOKEN` is present. Monitor usage if you enable Ion tiles
 - **Train layer**: Expect coverage gaps globally; interpolation is acceptable UX for sparse regions
 - **ACLED/GDELT**: Event data, not real-time second-by-second — render as static markers with timestamps, not moving entities
 - **Satellite positions**: Not fetched live — derived by running SGP4 orbital propagation on TLE data every second. Refresh TLE sets from CelesTrak daily (Starlink every few hours)

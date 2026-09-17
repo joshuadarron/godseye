@@ -79,7 +79,7 @@ six files:
 
 ### B3. Confirmed premises
 
-- `joshuaferrara/godseye` appears in 28 files.
+- `joshuaferrara/godseye` appeared in 28 files, corrected in Phase 1.1.
 - `github.com/joshuaferrara/go-satellite` is a real dependency at
   `services/api/go.mod:9` and must survive the rename.
 - `services/collector` contains only `cmd/` and `go.mod`, and is listed in
@@ -121,7 +121,7 @@ from the `github.com/joshuaferrara/go-satellite` dependency during
 scaffolding). The README clone command 404s. `services/collector` is an empty
 placeholder. Several docs are stale.
 
-- [ ] **1.1 Fix the module path.**
+- [x] **1.1 Fix the module path.**
 
   ```bash
   grep -rl --exclude-dir={.git,node_modules} 'joshuaferrara/godseye' . \
@@ -137,14 +137,14 @@ placeholder. Several docs are stale.
   nothing, `joshuaferrara/go-satellite` still appears in `services/api/go.mod`,
   and the build and tests pass.
 
-- [ ] **1.2 Remove the collector stub.** Delete `services/collector`, then
+- [x] **1.2 Remove the collector stub.** Delete `services/collector`, then
       remove it from `go.work`, the `go vet` and `go test` lines in
-      `.github/workflows/ci.yml`, the project trees in `.claude/CLAUDE.md` and
-      `ARCHITECTURE.md`, and any README mention.
+      `.github/workflows/ci.yml`, the project tree in `.claude/CLAUDE.md`, and the
+      `mise.toml` toolchain comment. `ARCHITECTURE.md` has no project tree.
 
   Acceptance: CI config references only `services/api` and `services/auth`.
 
-- [ ] **1.3 Fix stale docs.**
+- [x] **1.3 Fix stale docs.**
   - `.claude/CLAUDE.md`: add a Key Conventions line, "Go module paths are
     `github.com/joshuadarron/godseye/services/<name>`. Never derive the repo
     owner from a dependency path." Correct the Gotchas line claiming a Cesium
@@ -368,7 +368,7 @@ cross-platform helpers built for this.
     worker cadences, Redis fan-out, hypertable schema, Memgraph proximity and
     encounter queries.
   - **The module path story.** The commit that introduced
-    `joshuaferrara/godseye`, how many files it reached (28 as of this survey),
+    `joshuadarron/godseye`, how many files it reached (28 as of this survey),
     the `go-satellite` dependency it was inherited from, and the Phase 1 fix
     SHA.
   - **Numbers.** Go and TypeScript line counts (excluding generated files and
