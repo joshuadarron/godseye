@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joshuaferrara/godseye/services/auth/internal/config"
-	authjwt "github.com/joshuaferrara/godseye/services/auth/internal/jwt"
-	"github.com/joshuaferrara/godseye/services/auth/internal/repository"
+	"github.com/joshuadarron/godseye/services/auth/internal/config"
+	authjwt "github.com/joshuadarron/godseye/services/auth/internal/jwt"
+	"github.com/joshuadarron/godseye/services/auth/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 

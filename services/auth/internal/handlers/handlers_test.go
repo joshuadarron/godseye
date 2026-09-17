@@ -15,10 +15,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/joshuaferrara/godseye/services/auth/internal/config"
-	"github.com/joshuaferrara/godseye/services/auth/internal/db"
-	authjwt "github.com/joshuaferrara/godseye/services/auth/internal/jwt"
-	"github.com/joshuaferrara/godseye/services/auth/internal/repository"
+	"github.com/joshuadarron/godseye/services/auth/internal/config"
+	"github.com/joshuadarron/godseye/services/auth/internal/db"
+	authjwt "github.com/joshuadarron/godseye/services/auth/internal/jwt"
+	"github.com/joshuadarron/godseye/services/auth/internal/repository"
 )
 
 // testPool is nil when TEST_DATABASE_URL is unset, in which case every test in

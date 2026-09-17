@@ -11,12 +11,12 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/joshuaferrara/godseye/services/auth/internal/api"
-	"github.com/joshuaferrara/godseye/services/auth/internal/config"
-	"github.com/joshuaferrara/godseye/services/auth/internal/db"
-	"github.com/joshuaferrara/godseye/services/auth/internal/handlers"
-	"github.com/joshuaferrara/godseye/services/auth/internal/middleware"
-	"github.com/joshuaferrara/godseye/services/auth/internal/repository"
+	"github.com/joshuadarron/godseye/services/auth/internal/api"
+	"github.com/joshuadarron/godseye/services/auth/internal/config"
+	"github.com/joshuadarron/godseye/services/auth/internal/db"
+	"github.com/joshuadarron/godseye/services/auth/internal/handlers"
+	"github.com/joshuadarron/godseye/services/auth/internal/middleware"
+	"github.com/joshuadarron/godseye/services/auth/internal/repository"
 )
 
 func main() {

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joshuaferrara/godseye/services/api/internal/graph"
+	"github.com/joshuadarron/godseye/services/api/internal/graph"
 )
 
 func TestGetNearby_ReturnsResults(t *testing.T) {

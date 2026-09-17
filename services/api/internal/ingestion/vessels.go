@@ -14,7 +14,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"nhooyr.io/websocket"
 
-	"github.com/joshuaferrara/godseye/services/api/internal/models"
+	"github.com/joshuadarron/godseye/services/api/internal/models"
 )
 
 const (

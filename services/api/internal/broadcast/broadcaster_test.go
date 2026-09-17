@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/joshuaferrara/godseye/services/api/internal/models"
+	"github.com/joshuadarron/godseye/services/api/internal/models"
 )
 
 // newTestBroadcaster builds a Broadcaster with no Redis client. This is safe as

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/joshuaferrara/godseye/services/api/internal/graph"
+	"github.com/joshuadarron/godseye/services/api/internal/graph"
 )
 
 type graphHandler struct {

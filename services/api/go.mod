@@ -1,4 +1,4 @@
-module github.com/joshuaferrara/godseye/services/api
+module github.com/joshuadarron/godseye/services/api
 
 go 1.25.0
 

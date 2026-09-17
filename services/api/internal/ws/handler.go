@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/joshuaferrara/godseye/services/api/internal/broadcast"
-	"github.com/joshuaferrara/godseye/services/api/internal/middleware"
+	"github.com/joshuadarron/godseye/services/api/internal/broadcast"
+	"github.com/joshuadarron/godseye/services/api/internal/middleware"
 	"nhooyr.io/websocket"
 )
 
