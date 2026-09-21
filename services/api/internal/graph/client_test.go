@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/joshuaferrara/godseye/services/api/internal/graph"
+	"github.com/joshuadarron/godseye/services/api/internal/graph"
 )
 
 func TestNewClient_BadURL(t *testing.T) {

@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/joshuaferrara/godseye/services/auth/internal/handlers"
+	"github.com/joshuadarron/godseye/services/auth/internal/handlers"
 )
 
 // RegisterRoutes adds auth endpoints to the given mux.

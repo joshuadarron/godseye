@@ -14,7 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/joshuaferrara/godseye/services/api/internal/models"
+	"github.com/joshuadarron/godseye/services/api/internal/models"
 )
 
 const (

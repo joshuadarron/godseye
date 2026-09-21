@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joshuaferrara/godseye/services/api/internal/graph"
-	"github.com/joshuaferrara/godseye/services/api/internal/middleware"
+	"github.com/joshuadarron/godseye/services/api/internal/graph"
+	"github.com/joshuadarron/godseye/services/api/internal/middleware"
 )
 
 // RegisterRoutes adds REST API endpoints to the given mux.

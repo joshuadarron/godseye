@@ -1,4 +1,4 @@
-module github.com/joshuaferrara/godseye/services/auth
+module github.com/joshuadarron/godseye/services/auth
 
 go 1.22
 

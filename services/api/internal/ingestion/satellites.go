@@ -17,7 +17,7 @@ import (
 	"github.com/joshuaferrara/go-satellite"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/joshuaferrara/godseye/services/api/internal/models"
+	"github.com/joshuadarron/godseye/services/api/internal/models"
 )
 
 const (

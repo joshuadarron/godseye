@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/joshuaferrara/godseye/services/api/internal/middleware"
+	"github.com/joshuadarron/godseye/services/api/internal/middleware"
 )
 
 type meResponse struct {

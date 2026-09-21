@@ -13,9 +13,9 @@ import (
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 
-	"github.com/joshuaferrara/godseye/services/auth/internal/config"
-	authjwt "github.com/joshuaferrara/godseye/services/auth/internal/jwt"
-	"github.com/joshuaferrara/godseye/services/auth/internal/repository"
+	"github.com/joshuadarron/godseye/services/auth/internal/config"
+	authjwt "github.com/joshuadarron/godseye/services/auth/internal/jwt"
+	"github.com/joshuadarron/godseye/services/auth/internal/repository"
 )
 
 // authCodeTTL bounds how long the frontend has to redeem an authorization code.

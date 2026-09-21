@@ -8,7 +8,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/go-1.25+-00ADD8?logo=go&logoColor=white" alt="Go" />
-  <img src="https://img.shields.io/badge/react-18-61DAFB?logo=react&logoColor=white" alt="React" />
+  <img src="https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=white" alt="React" />
   <img src="https://img.shields.io/badge/cesium-3D_globe-4285F4?logo=cesium&logoColor=white" alt="CesiumJS" />
   <img src="https://img.shields.io/badge/timescaledb-time_series-FDB515?logo=timescale&logoColor=white" alt="TimescaleDB" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License" />
@@ -21,7 +21,7 @@
 **macOS / Linux (bash, zsh)**
 
 ```bash
-git clone https://github.com/joshuaferrara/godseye.git && cd godseye
+git clone https://github.com/joshuadarron/godseye.git && cd godseye
 
 # Start TimescaleDB + Redis + Memgraph
 docker compose up -d
@@ -39,7 +39,7 @@ cd packages/frontend && cp .env.example .env && pnpm install && pnpm dev
 **Windows (PowerShell)**
 
 ```powershell
-git clone https://github.com/joshuaferrara/godseye.git; cd godseye
+git clone https://github.com/joshuadarron/godseye.git; cd godseye
 
 # Start TimescaleDB + Redis + Memgraph
 docker compose up -d
@@ -59,7 +59,7 @@ cd packages/frontend; Copy-Item .env.example .env; pnpm install; pnpm dev
 
 Open **http://localhost:5173** — you should see a 3D globe with live flights and satellites. Sign-in is available via the button in the top-right corner.
 
-> **Note:** Each service includes a `.env.example` — copy it to `.env` and fill in the values. You'll need a free [Cesium Ion](https://ion.cesium.com/) token for terrain/imagery, [OpenSky Network](https://opensky-network.org/) credentials for flights, and a shared `JWT_SECRET` between the API and auth services.
+> **Note:** Each service includes a `.env.example`; copy it to `.env` and fill in the values. You will need [OpenSky Network](https://opensky-network.org/) credentials for flights and a shared `JWT_SECRET` between the API and auth services. A free [Cesium Ion](https://ion.cesium.com/) token is optional.
 
 ---
 
@@ -83,7 +83,7 @@ Open **http://localhost:5173** — you should see a 3D globe with live flights a
 ## Prerequisites
 
 - [Go](https://go.dev/) 1.25+
-- [Node.js](https://nodejs.org/) 18+ and [pnpm](https://pnpm.io/)
+- [Node.js](https://nodejs.org/) 22+ and [pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) and Docker Compose — on Windows, [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL 2 backend
 - A shell: bash/zsh on macOS/Linux, or Windows PowerShell 5.1 / PowerShell 7+ on Windows
 
@@ -186,10 +186,11 @@ GOOGLE_CLIENT_SECRET=
 ```env
 VITE_WS_URL=ws://localhost:8080/ws
 VITE_AUTH_URL=http://localhost:8081
-VITE_CESIUM_ION_TOKEN=     # https://ion.cesium.com/
+VITE_API_URL=              # optional, falls back to the VITE_WS_URL host
+VITE_CESIUM_ION_TOKEN=     # optional, https://ion.cesium.com/
 ```
 
-Required for core functionality: `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET` (shared by both Go services), and `VITE_CESIUM_ION_TOKEN`. Data source keys are optional — a layer without its key stays empty. OAuth client IDs are optional; email/password sign-in works without them.
+Required for core functionality: `DATABASE_URL`, `REDIS_URL`, and `JWT_SECRET` (shared by both Go services). Data source keys are optional; a layer without its key stays empty. `VITE_CESIUM_ION_TOKEN` is optional too, and `Globe.tsx` only applies it when set. OAuth client IDs are optional; email/password sign-in works without them.
 
 Generate a secret with:
 

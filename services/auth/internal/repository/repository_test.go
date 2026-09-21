@@ -12,7 +12,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/joshuaferrara/godseye/services/auth/internal/db"
+	"github.com/joshuadarron/godseye/services/auth/internal/db"
 )
 
 // testPool is nil when TEST_DATABASE_URL is unset, in which case every test in

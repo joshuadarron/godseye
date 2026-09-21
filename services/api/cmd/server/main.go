@@ -12,14 +12,14 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/joshuaferrara/godseye/services/api/internal/api"
-	"github.com/joshuaferrara/godseye/services/api/internal/broadcast"
-	"github.com/joshuaferrara/godseye/services/api/internal/config"
-	"github.com/joshuaferrara/godseye/services/api/internal/db"
-	"github.com/joshuaferrara/godseye/services/api/internal/graph"
-	"github.com/joshuaferrara/godseye/services/api/internal/ingestion"
-	"github.com/joshuaferrara/godseye/services/api/internal/middleware"
-	"github.com/joshuaferrara/godseye/services/api/internal/ws"
+	"github.com/joshuadarron/godseye/services/api/internal/api"
+	"github.com/joshuadarron/godseye/services/api/internal/broadcast"
+	"github.com/joshuadarron/godseye/services/api/internal/config"
+	"github.com/joshuadarron/godseye/services/api/internal/db"
+	"github.com/joshuadarron/godseye/services/api/internal/graph"
+	"github.com/joshuadarron/godseye/services/api/internal/ingestion"
+	"github.com/joshuadarron/godseye/services/api/internal/middleware"
+	"github.com/joshuadarron/godseye/services/api/internal/ws"
 )
 
 func main() {

@@ -7,7 +7,7 @@ Contributions welcome! Follow these guidelines to keep things smooth.
 1. Fork the repo
 2. Clone your fork
 3. Create a feature branch: `git checkout -b feat/your-feature`
-4. Follow the [Setup Guide](SETUP.md) to get running locally
+4. Follow the [Setup](README.md#setup) section in the README to get running locally
 
 ## Code Style
 
@@ -24,23 +24,28 @@ Contributions welcome! Follow these guidelines to keep things smooth.
 
 ## Commit Messages
 
-Use [Conventional Commits](https://www.conventionalcommits.org/) format:
+Format:
 
 ```
-type(scope): short description
-
-Optional longer body explaining the "why".
+<tag>: <Short summary of what was done.>
 ```
 
-Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+Rules:
+
+- Start with a capital letter and end with a period.
+- Keep the summary to 50 characters or less.
+- Present tense: describe what the commit does, not what you did.
+- No scopes, and no `Co-Authored-By` lines.
+
+Tags: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`
 
 Examples:
 
-- `feat(frontend): add satellite layer toggle`
-- `fix(api): handle nil pointer in vessel ingestion`
-- `docs: update setup instructions`
+- `feat: Add satellite layer toggle.`
+- `fix: Handle nil pointer in vessel ingestion.`
+- `docs: Update setup instructions.`
 
-Keep subject line under 50 characters. Body wraps at 72.
+Before committing, run `pnpm lint && pnpm format && pnpm typecheck && pnpm test`, plus `go vet ./services/... && go test ./services/...` for Go changes. Stage files explicitly; do not use `git add -A` or `git add .`.
 
 ## Pull Requests
 
