@@ -18,6 +18,7 @@ import { useViewportBounds } from '../../hooks/useViewportBounds'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useLayerVisibilityStore } from '../../stores/layerVisibilityStore'
 import { setViewer } from '../../utils/viewerRef'
+import { config } from '../../config'
 
 // Import registrations to populate the registry.
 import '../../registries/flights'
@@ -26,7 +27,7 @@ import '../../registries/vessels'
 import '../../registries/events'
 import '../../registries/conflicts'
 
-const token = import.meta.env.VITE_CESIUM_ION_TOKEN as string | undefined
+const token = config.cesiumIonToken
 if (token) {
   Ion.defaultAccessToken = token
 }

@@ -188,6 +188,7 @@ VITE_WS_URL=ws://localhost:8080/ws
 VITE_AUTH_URL=http://localhost:8081
 VITE_API_URL=              # optional, falls back to the VITE_WS_URL host
 VITE_CESIUM_ION_TOKEN=     # optional, https://ion.cesium.com/
+VITE_GOOGLE_MAPS_API_KEY=  # optional, https://developers.google.com/maps/documentation/tile/get-api-key
 ```
 
 Required for core functionality: `DATABASE_URL`, `REDIS_URL`, and `JWT_SECRET` (shared by both Go services). Data source keys are optional; a layer without its key stays empty. `VITE_CESIUM_ION_TOKEN` is optional too, and `Globe.tsx` only applies it when set. OAuth client IDs are optional; email/password sign-in works without them.

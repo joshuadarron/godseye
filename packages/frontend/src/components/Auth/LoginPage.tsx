@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { login } from '../../api/auth'
 import { useAuthStore } from '../../stores/authStore'
+import { config } from '../../config'
 
-const AUTH_URL = import.meta.env.VITE_AUTH_URL as string | undefined
+const AUTH_URL = config.authUrl
 
 interface LoginPageProps {
   onSwitchToRegister: () => void
