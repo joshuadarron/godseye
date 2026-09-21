@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { config } from '../config'
 
 export interface EncounterPair {
   sourceId: string
@@ -6,12 +7,12 @@ export interface EncounterPair {
   distKm: number
 }
 
-const API_BASE = import.meta.env.VITE_API_URL as string | undefined
+const API_BASE = config.apiUrl
 
 function apiUrl(path: string): string {
   if (API_BASE) return `${API_BASE}${path}`
   // Derive from WS URL or fall back to same origin.
-  const wsUrl = import.meta.env.VITE_WS_URL as string | undefined
+  const wsUrl = config.wsUrl
   if (wsUrl) {
     const url = new URL(wsUrl)
     url.protocol = url.protocol === 'wss:' ? 'https:' : 'http:'

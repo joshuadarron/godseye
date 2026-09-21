@@ -1,8 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import {
-  Ion,
   Color,
-  UrlTemplateImageryProvider,
   Viewer as CesiumViewer,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
@@ -18,6 +16,10 @@ import { useViewportBounds } from '../../hooks/useViewportBounds'
 import { useSelectedEntityStore } from '../../stores/selectedEntityStore'
 import { useLayerVisibilityStore } from '../../stores/layerVisibilityStore'
 import { setViewer } from '../../utils/viewerRef'
+import { creditContainer } from '../../utils/creditContainer'
+import { resolveImageryTier } from '../../utils/imagery'
+import { applyImageryTier } from '../../utils/imageryLayer'
+import { config } from '../../config'
 
 // Import registrations to populate the registry.
 import '../../registries/flights'
@@ -26,11 +28,6 @@ import '../../registries/vessels'
 import '../../registries/events'
 import '../../registries/conflicts'
 
-const token = import.meta.env.VITE_CESIUM_ION_TOKEN as string | undefined
-if (token) {
-  Ion.defaultAccessToken = token
-}
-
 function ViewerInit() {
   const { viewer: rawViewer } = useCesium()
 
@@ -38,21 +35,13 @@ function ViewerInit() {
     if (!rawViewer) return
     const viewer = rawViewer as CesiumViewer
 
-    // Replace the default Ion imagery with Google satellite + labels.
-    viewer.imageryLayers.removeAll()
-    viewer.imageryLayers.addImageryProvider(
-      new UrlTemplateImageryProvider({
-        url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-      }),
-    )
+    // Built here rather than at module scope: the layer belongs to this viewer
+    // instance, and StrictMode mounts, tears down, and remounts.
+    void applyImageryTier(viewer, resolveImageryTier(config), config.cesiumIonToken)
 
     // Run the clock in real-time so day/night matches reality.
     viewer.clock.multiplier = 1.0
     viewer.clock.shouldAnimate = true
-
-    // Hide the Cesium Ion credit logo.
-    const credit = viewer.cesiumWidget.creditContainer as HTMLElement
-    credit.style.display = 'none'
 
     // Force a resize so the viewer picks up final CSS-computed dimensions.
     viewer.resize()
@@ -189,6 +178,10 @@ export default function Globe() {
   return (
     <Viewer
       full
+      // Start empty; ViewerInit installs the configured imagery tier.
+      baseLayer={false}
+      baseLayerPicker={false}
+      creditContainer={creditContainer}
       timeline={false}
       animation={false}
       fullscreenButton={false}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useReducer } from 'react'
+import { config } from '../config'
 
 export interface NearbyEntity {
   id: string
@@ -10,11 +11,11 @@ export interface NearbyEntity {
   distKm: number
 }
 
-const API_BASE = import.meta.env.VITE_API_URL as string | undefined
+const API_BASE = config.apiUrl
 
 function apiUrl(path: string): string {
   if (API_BASE) return `${API_BASE}${path}`
-  const wsUrl = import.meta.env.VITE_WS_URL as string | undefined
+  const wsUrl = config.wsUrl
   if (wsUrl) {
     const url = new URL(wsUrl)
     url.protocol = url.protocol === 'wss:' ? 'https:' : 'http:'

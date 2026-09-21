@@ -188,6 +188,7 @@ VITE_WS_URL=ws://localhost:8080/ws
 VITE_AUTH_URL=http://localhost:8081
 VITE_API_URL=              # optional, falls back to the VITE_WS_URL host
 VITE_CESIUM_ION_TOKEN=     # optional, https://ion.cesium.com/
+VITE_GOOGLE_MAPS_API_KEY=  # optional, https://developers.google.com/maps/documentation/tile/get-api-key
 ```
 
 Required for core functionality: `DATABASE_URL`, `REDIS_URL`, and `JWT_SECRET` (shared by both Go services). Data source keys are optional; a layer without its key stays empty. `VITE_CESIUM_ION_TOKEN` is optional too, and `Globe.tsx` only applies it when set. OAuth client IDs are optional; email/password sign-in works without them.
@@ -275,6 +276,23 @@ go test ./services/auth/...
 
 The graph tests in `services/api/internal/graph` start a Memgraph container via
 testcontainers and require a running Docker daemon.
+
+---
+
+## Notices
+
+godseye is an independent project, started in March 2026. It is not affiliated
+with [God's Eye View](https://github.com/bilawalsidhu/gods-eye-view), which is a
+separate project with a similar name.
+
+**This is not an operational tool.** The data it shows may be delayed,
+incomplete, or wrong. Feeds drop out, free tiers rate-limit, satellite
+positions are propagated rather than measured, and vessels and aircraft can
+stop broadcasting at any time. Do not use godseye for navigation, emergency
+response, or any other operational purpose.
+
+Every external data source, what it is used for, and where its terms live is
+listed in [DATA_SOURCES.md](DATA_SOURCES.md).
 
 ---
 

@@ -12,6 +12,7 @@ const ICON_CLASS = 'w-7 h-7 shrink-0 fill-current'
 registerLayer({
   key: 'conflicts',
   label: 'Conflicts',
+  attribution: { label: 'ACLED', url: 'https://acleddata.com/' },
   icon: (
     <svg className={ICON_CLASS} viewBox="0 0 24 24">
       <path

@@ -48,3 +48,15 @@ body,
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Cesium renders its required provider credits into the Sources control, so
+   they inherit the HUD's type instead of Cesium's default white overlay. */
+.cesium-credit-slot .cesium-widget-credits {
+  display: block;
+  font-size: inherit;
+  color: inherit;
+}
+.cesium-credit-slot .cesium-widget-credits a {
+  color: inherit;
+  text-decoration: none;
+}

@@ -15,6 +15,7 @@ const ICON_CLASS = 'w-7 h-7 shrink-0 fill-current'
 registerLayer({
   key: 'satellites',
   label: 'Satellites',
+  attribution: { label: 'CelesTrak', url: 'https://celestrak.org/' },
   icon: (
     <svg className={ICON_CLASS} viewBox="0 0 24 24">
       <path

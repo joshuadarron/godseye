@@ -8,6 +8,7 @@ import RegisterPage from './components/Auth/RegisterPage'
 import OAuthCallback from './components/Auth/OAuthCallback'
 import ErrorBoundary from './components/ErrorBoundary'
 import ConnectionStatus from './components/HUD/ConnectionStatus'
+import SourcesControl from './components/HUD/SourcesControl'
 import { useAuthStore } from './stores/authStore'
 import { logout } from './api/auth'
 import { initAircraftClassifier } from './utils/aircraftClassifier'
@@ -46,6 +47,7 @@ function App() {
       <EntityTooltip />
       <EntityDetailPanel />
       <ConnectionStatus />
+      <SourcesControl />
 
       {/* Auth button in top-right corner */}
       <div className="pointer-events-auto absolute top-4 right-4 z-40">
