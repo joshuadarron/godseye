@@ -12,6 +12,7 @@ const ICON_CLASS = 'w-7 h-7 shrink-0 fill-current'
 registerLayer({
   key: 'events',
   label: 'Events',
+  attribution: { label: 'USGS', url: 'https://earthquake.usgs.gov/' },
   icon: (
     <svg className={ICON_CLASS} viewBox="0 0 24 24">
       <path

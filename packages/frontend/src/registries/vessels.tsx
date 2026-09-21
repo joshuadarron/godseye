@@ -12,6 +12,7 @@ const ICON_CLASS = 'w-7 h-7 shrink-0 fill-current'
 registerLayer({
   key: 'vessels',
   label: 'Vessels',
+  attribution: { label: 'AISStream', url: 'https://aisstream.io/' },
   icon: (
     <svg className={ICON_CLASS} viewBox="0 0 24 24">
       <path
