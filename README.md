@@ -279,6 +279,23 @@ testcontainers and require a running Docker daemon.
 
 ---
 
+## Notices
+
+godseye is an independent project, started in March 2026. It is not affiliated
+with [God's Eye View](https://github.com/bilawalsidhu/gods-eye-view), which is a
+separate project with a similar name.
+
+**This is not an operational tool.** The data it shows may be delayed,
+incomplete, or wrong. Feeds drop out, free tiers rate-limit, satellite
+positions are propagated rather than measured, and vessels and aircraft can
+stop broadcasting at any time. Do not use godseye for navigation, emergency
+response, or any other operational purpose.
+
+Every external data source, what it is used for, and where its terms live is
+listed in [DATA_SOURCES.md](DATA_SOURCES.md).
+
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

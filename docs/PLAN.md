@@ -169,23 +169,23 @@ Why: `Globe.tsx` loads imagery from
 endpoint rather than Maps Platform. It also hides Cesium's credit container.
 Both need to go before any GIF, hosted demo, or post.
 
-- [ ] **2.1 Centralize frontend config.** Create
+- [x] **2.1 Centralize frontend config.** Create
       `packages/frontend/src/config.ts` as the only reader of `import.meta.env`.
       Export a typed, frozen config object and update all nine call sites in B2.
 
   Acceptance: `grep -rn "import.meta.env" packages/frontend/src` matches only
   `config.ts`.
 
-- [ ] **2.2 Tiered imagery provider.** Add
+- [x] **2.2 Tiered imagery provider.** Add
       `packages/frontend/src/utils/imagery.ts` with a pure
       `resolveImageryTier(config)` returning `'default' | 'ion' | 'google3d'`, plus a
       function that applies the tier to a viewer.
 
-  | Tier       | Condition                      | What loads                                                                                                                                     |
-  | ---------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-  | `default`  | No keys                        | Cesium's bundled NaturalEarthII via `TileMapServiceImageryProvider.fromUrl(buildModuleUrl('Assets/Textures/NaturalEarthII'))`. Keyless.        |
-  | `ion`      | `VITE_CESIUM_ION_TOKEN` set    | Ion world imagery and world terrain                                                                                                            |
-  | `google3d` | `VITE_GOOGLE_MAPS_API_KEY` set | Google Photorealistic 3D Tiles through the official Cesium integration (`createGooglePhotorealistic3DTileset` with `GoogleMaps.defaultApiKey`) |
+  | Tier       | Condition                      | What loads                                                                                                                                                                                   |
+  | ---------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `default`  | No keys                        | Cesium's bundled NaturalEarthII via `TileMapServiceImageryProvider.fromUrl(buildModuleUrl('Assets/Textures/NaturalEarthII'))`. Keyless.                                                      |
+  | `ion`      | `VITE_CESIUM_ION_TOKEN` set    | Ion world imagery and world terrain                                                                                                                                                          |
+  | `google3d` | `VITE_GOOGLE_MAPS_API_KEY` set | Resolved and tested, but not rendered yet. Falls back to `ion` or `default`. The tileset is a `scene.primitives` path and Cesium gates it on its Google geocoder, which this viewer disables |
 
   Notes: verify every Cesium API name against the installed `cesium` version
   before using it. Confirm Vite serves Cesium's `Assets/` directory so
@@ -202,13 +202,13 @@ Both need to go before any GIF, hosted demo, or post.
   Acceptance: with an empty frontend `.env`, the globe renders with
   NaturalEarthII and visible credits, and no request goes to `mt1.google.com`.
 
-- [ ] **2.3 In-app data attribution.** Add an optional
+- [x] **2.3 In-app data attribution.** Add an optional
       `attribution: { label: string; url: string }` field to the layer registry
       entries in `src/registries/`. Render a small "Sources" control in the HUD
       listing attributions for currently visible layers. Fill it in for OpenSky,
       CelesTrak, AISStream, USGS, and ACLED.
 
-- [ ] **2.4 `DATA_SOURCES.md`.** Create it at the repo root, one table row per
+- [x] **2.4 `DATA_SOURCES.md`.** Create it at the repo root, one table row per
       source, with columns: Source, Used for, Key required, Env var, Attribution
       requirement, Terms URL, Redistribution notes (factual, no legal conclusions),
       Status (`needs review` or `ok`).
@@ -225,7 +225,7 @@ Both need to go before any GIF, hosted demo, or post.
   Mark every row `needs review`. Add a sentence noting that the API persists
   ACLED and OpenSky data and re-serves it over REST.
 
-- [ ] **2.5 README notices.** Add a short "Notices" section: an independence
+- [x] **2.5 README notices.** Add a short "Notices" section: an independence
       line stating godseye is an independent project started in March 2026 and not
       affiliated with God's Eye View, linking
       `https://github.com/bilawalsidhu/gods-eye-view`, neutral and respectful; a
