@@ -1,6 +1,7 @@
 import { useAuthStore } from '../stores/authStore'
+import { config } from '../config'
 
-const AUTH_URL = import.meta.env.VITE_AUTH_URL as string | undefined
+const AUTH_URL = config.authUrl
 
 /** Fetch wrapper that attaches Bearer token and handles 401 auto-refresh. */
 export async function authFetch(input: string, init?: RequestInit): Promise<Response> {

@@ -209,6 +209,7 @@ VITE_WS_URL=ws://localhost:8080/ws
 VITE_AUTH_URL=http://localhost:8081
 VITE_API_URL=                     # optional; falls back to the VITE_WS_URL host
 VITE_CESIUM_ION_TOKEN=            # optional
+VITE_GOOGLE_MAPS_API_KEY=         # optional, Google Map Tiles API
 ```
 
 ---

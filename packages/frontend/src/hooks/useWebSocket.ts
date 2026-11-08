@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { DeltaMessage } from '../types/common'
 import { entityRegistry } from '../stores/entityRegistry'
 import { useAuthStore } from '../stores/authStore'
+import { config } from '../config'
 import { useConnectionStore } from '../stores/connectionStore'
 
 // Ensure stores are registered before the hook runs.
@@ -100,7 +101,7 @@ export function useWebSocket() {
   }, [])
 
   const connect = useCallback(() => {
-    const baseUrl = import.meta.env.VITE_WS_URL as string | undefined
+    const baseUrl = config.wsUrl
     if (!baseUrl) return
 
     // Use subprotocol for auth: godseye.v1.TOKEN, or godseye.v1 if anonymous.

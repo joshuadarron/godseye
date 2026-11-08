@@ -1,6 +1,7 @@
 import type { AuthResponse, User } from '@godseye/shared'
+import { config } from '../config'
 
-const AUTH_URL = import.meta.env.VITE_AUTH_URL as string | undefined
+const AUTH_URL = config.authUrl
 
 function authUrl(path: string): string {
   if (!AUTH_URL) throw new Error('VITE_AUTH_URL is not configured')

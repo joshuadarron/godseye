@@ -4,10 +4,18 @@ import type { Entity } from '../types/common'
 import type { ModelEntity } from '../components/Globe/ModelLayer'
 import type { EntityStoreState } from '../stores/createEntityStore'
 import type { StoreApi, UseBoundStore } from 'zustand'
+/** Who this layer's data comes from, shown in the HUD while the layer is visible. */
+export interface LayerAttribution {
+  label: string
+  url: string
+}
+
 export interface LayerRegistration {
   key: string
   label: string
   icon: ReactNode
+  /** Credit for the upstream data provider. Omit only for layers with no external source. */
+  attribution?: LayerAttribution
   // Widened to accept stores of any entity type — concentrates the single `any` here.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   store: UseBoundStore<StoreApi<EntityStoreState<any>>>
